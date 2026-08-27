@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "oracle": {
+      "model": "9router/clinepass/cline-pass/deepseek-v4-flash"
+    },
+    "fixer": {
+      "model": "9router/clinepass/cline-pass/deepseek-v4-flash"
+    }
+  }
+}

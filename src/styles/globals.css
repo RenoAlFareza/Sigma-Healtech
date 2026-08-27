@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  /* Atria Banner Health Brand & Action Colors */
+  --color-brand: #00205B;
+  --color-accent: #007EB4;
+  --color-accent-hover: #00638E;
+  --color-accent-light: #E6F5FC;
+  --color-success: #008522;
+  --color-success-light: #E6F7E9;
+  --color-error: #DA291C;
+  --color-error-light: #FDEBEA;
+  --color-alert: #0077C8;
+  --color-alert-light: #EBF5FC;
+  --color-warning: #BF8900;
+  --color-warning-light: #FEF7E6;
+
+  /* Semantic UI Tokens */
+  --color-text-main: #303235;
+  --color-text-muted: #56595D;
+  --color-text-placeholder: #7B7F84;
+  --color-border-main: #CFD1D3;
+  --color-surface-disabled: #E1E1E2;
+  --color-surface-hover: #F5F5F5;
+
+  /* Neutral Scale */
+  --color-neutral-950: #0B0C0D;
+  --color-neutral-900: #303235;
+  --color-neutral-700: #56595D;
+  --color-neutral-500: #7B7F84;
+  --color-neutral-400: #9CA0A5;
+  --color-neutral-300: #B8BBBF;
+  --color-neutral-200: #CFD1D3;
+  --color-neutral-150: #E1E1E2;
+  --color-neutral-100: #EDEDEE;
+  --color-neutral-50: #F5F5F5;
+  --color-neutral-25: #FAFAFA;
+
+  /* Core Blue Scale */
+  --color-core-950: #03060D;
+  --color-core-900: #00205B;
+  --color-core-800: #093582;
+  --color-core-700: #1C4EA5;
+  --color-core-600: #3A6CC1;
+  --color-core-500: #628DD6;
+  --color-core-400: #8EAFE6;
+  --color-core-300: #B7CCF0;
+  --color-core-200: #D6E2F7;
+  --color-core-100: #EBF0FA;
+  --color-core-50: #F6F7FA;
+
+  /* Focus & Accessibility */
+  --color-focus-ring: #0B8EC6;
+
+  /* Typography */
+  --font-serif: Georgia, Cambria, 'Times New Roman', serif;
+  --font-heading: Georgia, Cambria, 'Times New Roman', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Border Radii */
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-pill: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 15px 0 rgba(0, 0, 0, 0.13);
+  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+:root {
+  --background: #FAFAFA;
+  --foreground: #303235;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global focus-visible accessibility indicator */
+:focus-visible {
+  outline: 2px solid #0B8EC6;
+  outline-offset: 2px;
+}
+
+/* Custom scrollbars for data tables and panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F5F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #B8BBBF;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA0A5;
+}
