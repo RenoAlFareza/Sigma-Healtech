@@ -52,7 +52,7 @@ describe('AppShell Component', () => {
     expect(screen.getByText('Child Content')).toBeInTheDocument();
   });
 
-  it('renders LocationSwitcher ONLY when user has multiple locations (e.g. ADMIN/MANAGER)', () => {
+  it('does not render the location switcher in the navbar', () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
       role: 'ADMIN',
@@ -62,27 +62,7 @@ describe('AppShell Component', () => {
       logout: mockLogout,
     });
 
-    const { rerender } = render(
-      <ActiveLocationProvider>
-        <AppShell>
-          <div>Content</div>
-        </AppShell>
-      </ActiveLocationProvider>
-    );
-
-    expect(screen.getByRole('combobox', { name: /Lokasi Aktif/i })).toBeInTheDocument();
-
-    // Now test single location user (e.g., REQUESTOR or ASSISTANT)
-    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
-      user: { id: 'usr-nurse', name: 'Perawat', role: 'REQUESTOR' },
-      role: 'REQUESTOR',
-      defaultLocationId: 'apotek-rawat-jalan',
-      locationIds: ['apotek-rawat-jalan'],
-      menu: [],
-      logout: mockLogout,
-    });
-
-    rerender(
+    render(
       <ActiveLocationProvider>
         <AppShell>
           <div>Content</div>
