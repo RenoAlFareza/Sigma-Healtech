@@ -61,7 +61,7 @@ describe('DashboardView Component', () => {
     await waitFor(() => {
       expect(screen.getByText('150')).toBeInTheDocument();
       expect(screen.getByText('6')).toBeInTheDocument();
-      expect(screen.getByText('98.2%')).toBeInTheDocument();
+      expect(screen.getByText('9')).toBeInTheDocument();
     });
 
     expect(screen.getByText('Tren Pemenuhan Permintaan (Fill Rate)')).toBeInTheDocument();

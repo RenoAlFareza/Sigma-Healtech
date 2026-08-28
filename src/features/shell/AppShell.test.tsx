@@ -45,8 +45,8 @@ describe('AppShell Component', () => {
     );
 
     expect(screen.getByText('SIGMA')).toBeInTheDocument();
-    expect(screen.getByText('Administrator Utama')).toBeInTheDocument();
-    expect(screen.getByText('ADMIN')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Buka menu pengguna/i })).toBeInTheDocument();
+    expect(screen.queryByText('Administrator Utama')).not.toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Child Content')).toBeInTheDocument();

@@ -1,21 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import {
-  Activity,
-  AlertTriangle,
   ArrowRight,
-  Boxes,
   CheckCircle2,
-  ChevronRight,
-  ClipboardClock,
-  PackageCheck,
-  PackageX,
+  MoreHorizontal,
+  Plus,
+  Share2,
   Sparkles,
-  TrendingUp,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -61,84 +56,83 @@ const tooltipStyle = {
 interface MetricCardProps {
   title: string;
   value: string | number;
-  detail: string;
-  icon: LucideIcon;
-  tone: 'blue' | 'cyan' | 'amber' | 'red';
+  unit: string;
+  detail: ReactNode;
+  href: string;
+  visual: 'pulse' | 'curve' | 'bars' | 'steps';
 }
 
-function MetricCard({ title, value, detail, icon: Icon, tone }: MetricCardProps) {
-  const tones = {
-    blue: {
-      icon: 'bg-[#e9f2ff] text-[#397fdc]',
-      glow: 'bg-[#90bdff]',
-    },
-    cyan: {
-      icon: 'bg-[#e4f8fa] text-[#278a9c]',
-      glow: 'bg-[#7dd5e1]',
-    },
-    amber: {
-      icon: 'bg-[#fff5df] text-[#b97716]',
-      glow: 'bg-[#f5c86d]',
-    },
-    red: {
-      icon: 'bg-[#fff0ee] text-[#c9544d]',
-      glow: 'bg-[#ef9b95]',
-    },
-  };
+function MetricVisual({ variant }: { variant: MetricCardProps['visual'] }) {
+  if (variant === 'pulse') {
+    return (
+      <svg className="h-10 w-24 shrink-0 text-[#4a8ff0]" viewBox="0 0 100 40" fill="none" aria-hidden="true">
+        <path d="M1 22h19l6-14 6 27 7-19 7 10 8-4h12l6-10 7 20 7-10h13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
 
+  if (variant === 'curve') {
+    return (
+      <svg className="h-10 w-24 shrink-0 text-[#4a8ff0]" viewBox="0 0 100 40" fill="none" aria-hidden="true">
+        <path d="M1 27c18 0 25-11 43-11 20 0 29 14 55 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M1 33h98" stroke="#e4eefb" strokeWidth="1" strokeDasharray="3 4" />
+      </svg>
+    );
+  }
+
+  const barHeights = variant === 'bars' ? [16, 29, 21, 34, 25, 38, 27] : [35, 32, 29, 25, 21, 18, 15];
   return (
-    <Card
-      shadow="none"
-      className="group relative min-h-[154px] rounded-[24px] border-white/80 bg-white/82 p-0 shadow-[0_18px_45px_rgba(40,78,124,0.07)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_56px_rgba(40,78,124,0.12)]"
-    >
-      <div className={`absolute -right-8 -top-10 h-24 w-24 rounded-full opacity-10 blur-2xl ${tones[tone].glow}`} />
-      <div className="relative flex h-full flex-col justify-between gap-5 p-5">
-        <div className="flex items-start justify-between gap-3">
-          <p className="max-w-[150px] text-[11px] font-bold uppercase tracking-[0.12em] text-[#728198]">
-            {title}
-          </p>
-          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl ${tones[tone].icon}`}>
-            <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} aria-hidden="true" />
-          </span>
-        </div>
-        <div>
-          <p className="text-[30px] font-bold leading-none tracking-[-0.05em] text-[#183b63]">
-            {value}
-          </p>
-          <p className="mt-2 text-[11px] font-medium text-[#8a98aa]">{detail}</p>
-        </div>
-      </div>
-    </Card>
+    <div className="flex h-10 w-24 shrink-0 items-end gap-1.5" aria-hidden="true">
+      {barHeights.map((height, index) => (
+        <span
+          key={`${variant}-${index}`}
+          className={`w-1.5 rounded-t-full ${index < 4 ? 'bg-[#4a8ff0]' : 'bg-[#a8ccfb]'}`}
+          style={{ height }}
+        />
+      ))}
+    </div>
   );
 }
 
-function SectionTitle({
-  eyebrow,
-  title,
-  action,
-}: {
-  eyebrow: string;
-  title: string;
-  action?: React.ReactNode;
-}) {
+function MetricCard({ title, value, unit, detail, href, visual }: MetricCardProps) {
+
   return (
-    <div className="flex items-end justify-between gap-4">
+    <article className="group flex min-h-[180px] flex-col justify-between rounded-[20px] border border-[#dfe7f0] bg-white/92 p-5 shadow-[0_3px_12px_rgba(35,72,118,0.04)] backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-[#cfdef0] hover:shadow-[0_10px_26px_rgba(35,72,118,0.08)]">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7d8da4]">{eyebrow}</p>
-        <h2 className="mt-1 text-lg font-bold tracking-[-0.025em] text-[#183b63] sm:text-xl">{title}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#62768e]">{title}</p>
+          <Link
+            href={href}
+            aria-label={`Lihat detail ${title}`}
+            className="grid h-7 w-7 place-items-center rounded-full text-[#9ba9b8] transition hover:bg-[#edf4fd] hover:text-[#397fdc]"
+          >
+            <MoreHorizontal className="h-4 w-4" strokeWidth={2} />
+          </Link>
+        </div>
+        <div className="mt-2 flex items-baseline gap-1.5">
+          <span className="text-[30px] font-bold leading-none tracking-[-0.045em] text-[#142f52] tabular-nums sm:text-[32px]">{value}</span>
+          <span className="text-[10px] font-semibold text-[#70839a]">{unit}</span>
+        </div>
       </div>
-      {action}
-    </div>
+
+      <div className="mt-4 flex items-center gap-3">
+        <MetricVisual variant={visual} />
+        <p className="text-[10px] leading-[1.45] text-[#708198] sm:text-[11px]">{detail}</p>
+      </div>
+    </article>
   );
 }
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-6" data-testid="dashboard-skeleton">
-      <Skeleton className="h-[250px] w-full rounded-[30px] bg-white/70" />
+      <div className="flex items-center justify-between gap-4">
+        <Skeleton className="h-10 w-64 rounded-xl bg-white/70" />
+        <Skeleton className="h-10 w-72 rounded-xl bg-white/70" />
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-[154px] w-full rounded-[24px] bg-white/70" />
+          <Skeleton key={index} className="h-[180px] w-full rounded-[20px] bg-white/70" />
         ))}
       </div>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.75fr)]">
@@ -169,6 +163,24 @@ export function DashboardView() {
       setError(fetchError instanceof Error ? fetchError.message : 'Gagal memuat data dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShareReport = async () => {
+    const shareData = {
+      title: 'SIGMA Dashboard Overview',
+      text: 'Ringkasan operasional supply chain SIGMA.',
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      await navigator.clipboard?.writeText(shareData.url);
+    } catch {
+      return;
     }
   };
 
@@ -222,99 +234,67 @@ export function DashboardView() {
 
   return (
     <div className="relative space-y-7 pb-4">
-      <section className="relative overflow-hidden rounded-[30px] border border-white/80 bg-[linear-gradient(118deg,rgba(255,255,255,0.96)_0%,rgba(242,249,255,0.92)_56%,rgba(218,237,255,0.88)_100%)] px-5 py-6 shadow-[0_24px_70px_rgba(42,81,126,0.10)] sm:px-8 sm:py-8 lg:px-10">
-        <div className="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-[#82b9ff]/25 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-[-100px] left-[42%] h-52 w-52 rounded-full bg-[#b9e8f3]/35 blur-3xl" />
-
-        <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_330px]">
+      <section className="space-y-5" aria-labelledby="dashboard-overview-title">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#d8e8f8] bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#47709d] shadow-sm">
-                <Activity className="h-3.5 w-3.5 text-[#4b94e8]" strokeWidth={2} />
-                Operations overview
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#62819f]">
-                <span className="h-2 w-2 rounded-full bg-[#42b887] shadow-[0_0_0_4px_rgba(66,184,135,0.12)]" />
-                Sistem aktif
-              </span>
-            </div>
-
-            <h1 className="mt-5 max-w-2xl text-[30px] font-bold leading-[1.08] tracking-[-0.045em] text-[#163a63] sm:text-[40px]">
-              Dashboard Pemantauan Logistik
+            <h1 id="dashboard-overview-title" className="text-2xl font-bold tracking-[-0.04em] text-[#132e50] sm:text-3xl">
+              Dashboard Overview
             </h1>
-            <p className="mt-3 max-w-2xl text-xs leading-6 text-[#6f8198] sm:text-sm">
-              Kendalikan persediaan, arus permintaan, dan kesehatan stok dari satu tampilan operasional yang lebih jernih.
+            <p className="mt-1.5 text-[11px] text-[#7b8ca1] sm:text-xs">
+              Ringkasan kesehatan stok dan arus permintaan hari ini
             </p>
-
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Link
-                href="/requisitions/create"
-                className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#183d68] px-5 text-xs font-bold text-white shadow-[0_12px_28px_rgba(24,61,104,0.24)] transition hover:-translate-y-0.5 hover:bg-[#214d7e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a8ff0]"
-              >
-                Buat permintaan
-                <ArrowRight className="h-4 w-4" strokeWidth={1.9} />
-              </Link>
-              <Link
-                href="/inventory"
-                className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[#dbe8f5] bg-white/75 px-5 text-xs font-bold text-[#355d87] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Lihat inventori
-                <ChevronRight className="h-4 w-4" strokeWidth={1.9} />
-              </Link>
-            </div>
           </div>
-
-          <div className="relative mx-auto flex w-full max-w-[330px] items-center justify-center lg:justify-end">
-            <div className="relative grid h-[190px] w-[190px] place-items-center rounded-full bg-[conic-gradient(#4a8ff0_var(--health),#dcecff_0)] p-[13px] shadow-[0_24px_60px_rgba(69,126,189,0.18)]" style={{ '--health': `${Math.min(summary.fillRatePercentage, 100)}%` } as React.CSSProperties}>
-              <div className="grid h-full w-full place-items-center rounded-full border border-white bg-white/95 text-center shadow-[inset_0_0_32px_rgba(102,163,224,0.09)]">
-                <div>
-                  <PackageCheck className="mx-auto h-5 w-5 text-[#4a8ff0]" strokeWidth={1.8} />
-                  <p className="mt-2 text-[34px] font-bold leading-none tracking-[-0.06em] text-[#173b66]">
-                    {summary.fillRatePercentage}%
-                  </p>
-                  <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8291a8]">Fill rate</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute bottom-1 right-0 rounded-2xl border border-white bg-white/90 px-3.5 py-2.5 shadow-[0_12px_30px_rgba(42,81,126,0.12)] backdrop-blur-md sm:right-4">
-              <p className="flex items-center gap-1.5 text-[10px] font-bold text-[#368c6a]">
-                <TrendingUp className="h-3.5 w-3.5" /> Target ≥95%
-              </p>
-            </div>
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => void handleShareReport()}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dce5ef] bg-white px-4 text-[11px] font-semibold text-[#294765] shadow-[0_2px_7px_rgba(35,72,118,0.05)] transition hover:border-[#c7d8eb] hover:bg-[#f8fbff] sm:text-xs"
+            >
+              <Share2 className="h-4 w-4 text-[#68819a]" strokeWidth={1.9} />
+              Bagikan Laporan
+            </button>
+            <Link
+              href="/requisitions/create"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1769e8] px-4 text-[11px] font-semibold text-white shadow-[0_7px_18px_rgba(23,105,232,0.2)] transition hover:bg-[#0d5acb] sm:text-xs"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2} />
+              Buat Permintaan
+            </Link>
           </div>
         </div>
-      </section>
 
-      <section className="space-y-4" aria-labelledby="overview-title">
-        <SectionTitle eyebrow="Ringkasan hari ini" title="Kondisi operasional" />
-        <div id="overview-title" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             title="Total Produk"
             value={numberFormatter.format(summary.totalProducts)}
-            detail="SKU terdaftar di seluruh lokasi"
-            icon={Boxes}
-            tone="blue"
+            unit="SKU"
+            href="/products"
+            visual="pulse"
+            detail={<>Produk aktif terdaftar di <strong className="font-semibold text-[#2f6fbd]">seluruh jaringan layanan</strong></>}
           />
           <MetricCard
             title="Stok Menipis"
             value={numberFormatter.format(summary.lowStockCount)}
-            detail="Perlu perencanaan pengadaan"
-            icon={AlertTriangle}
-            tone="amber"
+            unit="SKU"
+            href="/inventory?status=LOW_STOCK"
+            visual="curve"
+            detail={<>Item telah mencapai <strong className="font-semibold text-[#2f6fbd]">batas stok minimum</strong></>}
           />
           <MetricCard
             title="Stok Habis"
             value={numberFormatter.format(summary.stockoutCount)}
-            detail="Butuh tindak lanjut segera"
-            icon={PackageX}
-            tone="red"
+            unit="SKU"
+            href="/inventory?status=OUT_OF_STOCK"
+            visual="bars"
+            detail={<>Item membutuhkan <strong className="font-semibold text-[#2f6fbd]">tindak lanjut segera</strong></>}
           />
           <MetricCard
             title="Pending Requisition"
             value={numberFormatter.format(summary.pendingRequisitionsCount)}
-            detail="Menunggu proses persetujuan"
-            icon={ClipboardClock}
-            tone="cyan"
+            unit="REQ"
+            href="/requisitions?status=PENDING_REVIEW"
+            visual="steps"
+            detail={<>Permintaan masih <strong className="font-semibold text-[#2f6fbd]">menunggu persetujuan</strong></>}
           />
         </div>
       </section>

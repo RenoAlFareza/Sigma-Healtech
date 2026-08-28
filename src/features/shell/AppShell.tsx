@@ -11,7 +11,6 @@ import {
   Bell,
   Boxes,
   ChartNoAxesColumnIncreasing,
-  ChevronDown,
   ClipboardList,
   LayoutDashboard,
   LogOut,
@@ -112,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           : 'bg-[var(--color-core-50)]'
       }`}
     >
-      <header className="sticky top-0 z-40 bg-transparent px-3 py-3 sm:px-5 lg:px-8">
+      <header className="sticky top-0 z-40 bg-transparent px-3 pb-3 pt-9 sm:px-5 lg:px-8">
         <nav
           aria-label="Navigasi utama"
           className="relative mx-auto flex h-[68px] w-full max-w-[1680px] items-center gap-3 rounded-full border border-white/90 bg-white/90 px-3.5 shadow-[0_10px_35px_rgba(37,61,93,0.07)] backdrop-blur-xl sm:px-5"
@@ -188,24 +187,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 aria-label="Buka menu pengguna"
                 aria-expanded={isProfileOpen}
                 onClick={() => setIsProfileOpen((open) => !open)}
-                className="group flex h-11 items-center gap-2.5 rounded-full p-1 pr-2 text-left transition hover:bg-[#f5f7fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff]"
+                className="group grid h-10 w-10 place-items-center rounded-full transition hover:bg-[#f5f7fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff]"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#2158a8,#173768)] text-[10px] font-bold text-white ring-2 ring-[#e9eef5] transition group-hover:ring-[#bcd4ff]">
                   {getInitials(user?.name)}
                 </span>
-                <span className="hidden max-w-[120px] leading-tight min-[1750px]:block">
-                  <span className="block truncate text-[10px] font-bold text-[#18243a]">
-                    {user?.name || 'User'}
-                  </span>
-                  <span className="mt-0.5 block text-[8px] font-semibold uppercase tracking-wide text-[#9aa5b5]">
-                    {role || 'VIEWER'}
-                  </span>
-                </span>
-                <ChevronDown
-                  className={`hidden h-3.5 w-3.5 text-[#9aa5b5] transition-transform min-[1750px]:block ${
-                    isProfileOpen ? 'rotate-180' : ''
-                  }`}
-                />
               </button>
 
               {isProfileOpen && (
@@ -335,7 +321,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <main className="mx-auto min-h-[calc(100vh-92px)] w-full max-w-[1728px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <main className="mx-auto min-h-[calc(100vh-115px)] w-full max-w-[1728px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {children}
       </main>
 
