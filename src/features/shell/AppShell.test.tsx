@@ -120,6 +120,10 @@ describe('AppShell Component', () => {
       </ActiveLocationProvider>
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /Buka pencarian/i }));
+
+    expect(screen.getByRole('dialog', { name: /Pencarian global/i })).toBeInTheDocument();
+
     const searchInput = screen.getByPlaceholderText(/Cari produk, SKU, atau menu\.\.\./i);
     fireEvent.change(searchInput, { target: { value: 'Paracetamol' } });
     

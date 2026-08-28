@@ -156,29 +156,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <form
-              onSubmit={handleSearchSubmit}
-              className={`absolute right-3 top-[calc(100%+12px)] w-[min(360px,calc(100vw-24px))] rounded-[22px] border border-[#e5eaf1] bg-white p-2 shadow-[0_20px_55px_rgba(37,61,93,0.16)] transition-all duration-200 sm:right-5 ${
-                isSearchOpen
-                  ? 'visible translate-y-0 opacity-100'
-                  : 'pointer-events-none invisible -translate-y-2 opacity-0'
-              }`}
-              role="search"
-            >
-              <Search
-                className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a96a8]"
-                strokeWidth={1.8}
-              />
-              <input
-                id="global-search-input"
-                type="search"
-                placeholder="Cari produk, SKU, atau menu..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-11 w-full rounded-2xl border border-transparent bg-[#f5f7fa] pl-10 pr-4 text-xs text-[#1b2940] outline-none transition placeholder:text-[#9aa5b5] focus:border-[#b9d3ff] focus:bg-white focus:ring-4 focus:ring-[#eaf2ff]"
-              />
-            </form>
-
             <button
               type="button"
               aria-label="Buka pencarian"
@@ -267,18 +244,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {isMobileMenuOpen && (
           <div className="mx-auto mt-2 max-w-[1680px] rounded-[28px] border border-white/90 bg-white/95 px-4 pb-5 pt-4 shadow-[0_18px_45px_rgba(37,61,93,0.10)] min-[1320px]:hidden">
-            <form onSubmit={handleSearchSubmit} className="relative mb-4" role="search">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-placeholder)]" />
-              <input
-                type="search"
-                aria-label="Pencarian mobile"
-                placeholder="Cari produk, SKU, atau menu..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-11 w-full rounded-xl border border-[var(--color-core-100)] bg-[var(--color-core-50)] pl-10 pr-4 text-xs outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-light)]"
-              />
-            </form>
-
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {menu.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -326,6 +291,49 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </header>
+
+      {isSearchOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-[#1a2638]/40 px-4 pt-[12vh] backdrop-blur-[2px]"
+          onMouseDown={() => setIsSearchOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="global-search-title"
+            className="w-full max-w-xl rounded-[28px] border border-white/80 bg-white p-4 shadow-[0_28px_80px_rgba(20,36,58,0.24)] sm:p-5"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <h2 id="global-search-title" className="sr-only">Pencarian global</h2>
+            <form onSubmit={handleSearchSubmit} className="relative" role="search">
+              <Search
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8a96a8]"
+                strokeWidth={1.8}
+              />
+              <input
+                id="global-search-input"
+                autoFocus
+                type="search"
+                placeholder="Cari produk, SKU, atau menu..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="h-12 w-full rounded-full border border-[#dfe5ed] bg-[#f8fafc] pl-12 pr-12 text-xs font-medium text-[#1b2940] outline-none transition placeholder:text-[#9aa5b5] focus:border-[#9bc2ff] focus:bg-white focus:ring-4 focus:ring-[#eaf2ff] sm:h-14 sm:text-sm"
+              />
+              <button
+                type="button"
+                aria-label="Tutup pencarian"
+                onClick={() => setIsSearchOpen(false)}
+                className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[#98a3b2] transition hover:bg-[#edf2f7] hover:text-[#344156]"
+              >
+                <X className="h-4 w-4" strokeWidth={1.8} />
+              </button>
+            </form>
+            <p className="px-3 pt-3 text-[10px] font-medium text-[#929eae] sm:text-[11px]">
+              Tekan ESC atau klik area luar untuk menutup
+            </p>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto min-h-[calc(100vh-92px)] w-full max-w-[1728px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {children}
