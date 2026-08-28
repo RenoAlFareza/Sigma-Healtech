@@ -9,9 +9,12 @@ import { formatQuantity } from '@/shared/lib/format';
 import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
 import { getReorderReport } from './api';
 import type { ReorderReportItem } from './api';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 export function ReorderReport() {
   const router = useRouter();
+  const { role } = useAuth();
+  const canCreateRequisition = role !== null && ['ADMIN', 'MANAGER', 'ASSISTANT', 'PHARMACIST'].includes(role);
   const { activeLocationId } = useActiveLocation();
   const [data, setData] = useState<ReorderReportItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +94,7 @@ export function ReorderReport() {
           keyExtractor={(it) => it.product.id}
           loading={false}
           emptyText="Tidak ada item yang perlu di-reorder"
-          rowActions={(it) => (
+          rowActions={canCreateRequisition ? (it) => (
             <Button
               variant="outline"
               size="sm"
@@ -100,7 +103,7 @@ export function ReorderReport() {
             >
               Buat Requisition
             </Button>
-          )}
+          ) : undefined}
         />
       </Card>
     </div>

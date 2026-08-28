@@ -73,6 +73,49 @@ describe('AppShell Component', () => {
     expect(screen.queryByRole('combobox', { name: /Lokasi Aktif/i })).not.toBeInTheDocument();
   });
 
+  it('opens one accessible feature mega-menu with grouped destinations', () => {
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [
+        { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+        {
+          id: 'inventory',
+          label: 'Inventory',
+          groups: [
+            {
+              id: 'stock',
+              label: 'Persediaan',
+              items: [
+                {
+                  id: 'stock-card',
+                  label: 'Kartu Stok & Lot',
+                  href: '/inventory?view=stock-card',
+                  description: 'Riwayat stok per produk',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      logout: mockLogout,
+    });
+
+    render(
+      <ActiveLocationProvider>
+        <AppShell><div>Content</div></AppShell>
+      </ActiveLocationProvider>
+    );
+
+    const trigger = screen.getByRole('button', { name: /Inventory/i });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: /Kartu Stok & Lot/i })).toHaveAttribute('href', '/inventory?view=stock-card');
+  });
+
   it('triggers logout on clicking logout button', async () => {
     mockLogout.mockResolvedValueOnce(undefined);
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({

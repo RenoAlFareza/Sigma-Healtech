@@ -8,9 +8,12 @@ import type { DataTableColumn } from '@/shared/ui';
 import { formatCurrency, formatDate, formatNumber } from '@/shared/lib/format';
 import { listPOs } from './api';
 import type { PurchaseOrder } from '@/shared/types/domain';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 export function ProcurementList() {
   const router = useRouter();
+  const { role } = useAuth();
+  const canCreatePO = role !== null && ['BUYER', 'MANAGER', 'ADMIN'].includes(role);
   const [data, setData] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,11 +68,11 @@ export function ProcurementList() {
       <Card
         title="Purchase Order"
         subtitle="Pesanan pembelian ke supplier"
-        headerAction={
+        headerAction={canCreatePO ? (
           <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />} onClick={() => router.push('/procurement/new')}>
             Buat PO
           </Button>
-        }
+        ) : undefined}
         padding="md"
       >
         <DataTable data={data} columns={columns} keyExtractor={(p) => p.id} loading={false} emptyText="Belum ada PO" emptyIcon={<ShoppingCart className="w-6 h-6" />} onRowClick={(p) => router.push(`/procurement/${p.id}`)} />

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Boxes } from 'lucide-react';
+import { Search, Boxes, PackageSearch } from 'lucide-react';
 import { Card, DataTable, StatusBadge, Select, Input, Pagination, Skeleton, EmptyState, ErrorState } from '@/shared/ui';
 import type { DataTableColumn } from '@/shared/ui';
 import { formatDate, formatQuantity } from '@/shared/lib/format';
@@ -22,14 +22,20 @@ const STATUS_OPTIONS = [
   { value: 'EXPIRED', label: 'Expired' },
 ];
 
-export function InventoryBrowser() {
+export function InventoryBrowser({
+  initialStatus = 'ALL',
+  showStockCardGuide = false,
+}: {
+  initialStatus?: string;
+  showStockCardGuide?: boolean;
+}) {
   const router = useRouter();
   const { activeLocationId } = useActiveLocation();
 
   const [keyword, setKeyword] = useState('');
   const [submittedKeyword, setSubmittedKeyword] = useState('');
   const [category, setCategory] = useState('ALL');
-  const [status, setStatus] = useState('ALL');
+  const [status, setStatus] = useState(initialStatus);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<InventoryItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -116,6 +122,17 @@ export function InventoryBrowser() {
 
   return (
     <div className="flex flex-col gap-4">
+      {showStockCardGuide && (
+        <div className="flex items-start gap-3 rounded-2xl border border-[#cfe1f6] bg-[#edf6ff] px-4 py-3 text-[#285d93]">
+          <PackageSearch className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <div>
+            <p className="text-xs font-bold">Buka Kartu Stok & Lot</p>
+            <p className="mt-1 text-[10px] leading-5 text-[#5d7895]">
+              Pilih salah satu produk pada tabel untuk melihat lot, tanggal kedaluwarsa, posisi bin, dan audit ledger stok.
+            </p>
+          </div>
+        </div>
+      )}
       <Card
         title="Inventori"
         subtitle="Stok per item/lokasi/bin"

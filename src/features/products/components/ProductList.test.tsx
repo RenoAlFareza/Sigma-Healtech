@@ -4,6 +4,11 @@ import userEvent from '@testing-library/user-event';
 import type { Product } from '@/shared/types/domain';
 
 const routerPush = vi.fn();
+let mockRole = 'ADMIN';
+
+vi.mock('@/features/auth/AuthProvider', () => ({
+  useAuth: () => ({ role: mockRole }),
+}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: routerPush, replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
@@ -52,6 +57,7 @@ function renderList() {
 describe('ProductList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRole = 'ADMIN';
     mockList.mockResolvedValue({ data: products, totalCount: 1 });
     mockCategories.mockResolvedValue(['Analgesik/Antipiretik', 'Antibiotik']);
   });
@@ -100,5 +106,13 @@ describe('ProductList', () => {
       page: 1,
       size: 20,
     });
+  });
+
+  it('hides product mutation actions for non-admin roles', async () => {
+    mockRole = 'VIEWER';
+    renderList();
+    await flushPromises();
+
+    expect(screen.queryByRole('button', { name: /new product/i })).not.toBeInTheDocument();
   });
 });

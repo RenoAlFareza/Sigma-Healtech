@@ -7,6 +7,7 @@ import { DataTable, Input, Select, StatusBadge, Card, ErrorState, Button } from 
 import type { DataTableColumn } from '@/shared/ui';
 import { formatCurrency } from '@/shared/lib/format';
 import type { Product } from '@/shared/types/domain';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { listProducts, getCategories } from '../api';
 
 const PAGE_SIZE = 20;
@@ -18,6 +19,8 @@ interface LoadedState {
 
 export function ProductList() {
   const router = useRouter();
+  const { role } = useAuth();
+  const canCreateProduct = role === 'ADMIN';
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
@@ -108,7 +111,7 @@ export function ProductList() {
         padding="md"
         title="Products Catalog"
         subtitle={`${data.totalCount.toLocaleString()} KFA products`}
-        headerAction={
+        headerAction={canCreateProduct ? (
           <Button
             variant="primary"
             size="sm"
@@ -117,7 +120,7 @@ export function ProductList() {
           >
             New Product
           </Button>
-        }
+        ) : undefined}
       >
         <form
           onSubmit={handleSearch}

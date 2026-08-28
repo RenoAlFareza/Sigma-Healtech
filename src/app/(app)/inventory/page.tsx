@@ -6,10 +6,22 @@ export const metadata: Metadata = {
   description: 'Browse location-scoped stock.',
 };
 
-export default function InventoryPage() {
+const INVENTORY_STATUSES = ['ALL', 'IN_STOCK', 'LOW_STOCK', 'STOCKOUT', 'EXPIRING', 'EXPIRED'];
+
+export default async function InventoryPage({ searchParams }: PageProps<'/inventory'>) {
+  const params = await searchParams;
+  const requestedStatus = typeof params.status === 'string' ? params.status : 'ALL';
+  const normalizedStatus = requestedStatus === 'OUT_OF_STOCK' ? 'STOCKOUT' : requestedStatus;
+  const initialStatus = INVENTORY_STATUSES.includes(normalizedStatus) ? normalizedStatus : 'ALL';
+  const showStockCardGuide = params.view === 'stock-card';
+
   return (
     <div className="p-6">
-      <InventoryBrowser />
+      <InventoryBrowser
+        key={`${initialStatus}:${showStockCardGuide}`}
+        initialStatus={initialStatus}
+        showStockCardGuide={showStockCardGuide}
+      />
     </div>
   );
 }
