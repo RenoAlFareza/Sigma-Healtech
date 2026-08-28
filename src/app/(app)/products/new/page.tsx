@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function NewProductPage() {
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="max-w-3xl p-6">
       <ToastProvider>
         <ProductForm mode="create" />
       </ToastProvider>
