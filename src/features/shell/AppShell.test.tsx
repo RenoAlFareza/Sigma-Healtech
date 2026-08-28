@@ -112,6 +112,7 @@ describe('AppShell Component', () => {
       </ActiveLocationProvider>
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /Buka menu pengguna/i }));
     const logoutBtn = screen.getByRole('button', { name: /Keluar/i });
     fireEvent.click(logoutBtn);
 
