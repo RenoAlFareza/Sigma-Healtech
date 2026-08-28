@@ -112,10 +112,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           : 'bg-[var(--color-core-50)]'
       }`}
     >
-      <header className="sticky top-0 z-40 bg-[#f3f6fb]/90 px-3 py-3 backdrop-blur-xl sm:px-5 lg:px-8">
+      <header className="sticky top-0 z-40 bg-transparent px-3 py-3 sm:px-5 lg:px-8">
         <nav
           aria-label="Navigasi utama"
-          className="relative mx-auto flex h-[68px] w-full max-w-[1440px] items-center gap-3 rounded-full border border-white/90 bg-white/90 px-3.5 shadow-[0_10px_35px_rgba(37,61,93,0.07)] backdrop-blur-xl sm:px-5"
+          className="relative mx-auto flex h-[68px] w-full max-w-[1680px] items-center gap-3 rounded-full border border-white/90 bg-white/90 px-3.5 shadow-[0_10px_35px_rgba(37,61,93,0.07)] backdrop-blur-xl sm:px-5"
         >
           <Link
             href="/dashboard"
@@ -135,7 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <div className="absolute left-1/2 hidden max-w-[760px] -translate-x-1/2 items-center gap-0.5 rounded-full border border-[#e8ebf0] bg-[#f6f7f9] p-1 min-[1320px]:flex">
+          <div className="absolute left-1/2 hidden max-w-[1080px] -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#e8ebf0] bg-[#f6f7f9] p-1 min-[1320px]:flex">
             {menu.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.id}
                   href={item.href}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`flex h-9 shrink-0 items-center rounded-full px-2.5 text-[9px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff] min-[1450px]:px-3 min-[1450px]:text-[10px] ${
+                  className={`flex h-10 shrink-0 items-center rounded-full px-3.5 text-[10px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff] min-[1450px]:px-4 min-[1450px]:text-[11px] min-[1600px]:px-[18px] min-[1600px]:text-xs ${
                     isActive
                       ? 'bg-[#0a65ff] text-white shadow-[0_6px_14px_rgba(10,101,255,0.22)]'
                       : 'text-[#687386] hover:bg-white hover:text-[#18243a]'
@@ -216,7 +216,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#2158a8,#173768)] text-[10px] font-bold text-white ring-2 ring-[#e9eef5] transition group-hover:ring-[#bcd4ff]">
                   {getInitials(user?.name)}
                 </span>
-                <span className="hidden max-w-[120px] leading-tight min-[1450px]:block">
+                <span className="hidden max-w-[120px] leading-tight min-[1750px]:block">
                   <span className="block truncate text-[10px] font-bold text-[#18243a]">
                     {user?.name || 'User'}
                   </span>
@@ -225,7 +225,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </span>
                 </span>
                 <ChevronDown
-                  className={`hidden h-3.5 w-3.5 text-[#9aa5b5] transition-transform min-[1450px]:block ${
+                  className={`hidden h-3.5 w-3.5 text-[#9aa5b5] transition-transform min-[1750px]:block ${
                     isProfileOpen ? 'rotate-180' : ''
                   }`}
                 />
@@ -266,7 +266,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         {isMobileMenuOpen && (
-          <div className="mx-auto mt-2 max-w-[1440px] rounded-[28px] border border-white/90 bg-white/95 px-4 pb-5 pt-4 shadow-[0_18px_45px_rgba(37,61,93,0.10)] min-[1320px]:hidden">
+          <div className="mx-auto mt-2 max-w-[1680px] rounded-[28px] border border-white/90 bg-white/95 px-4 pb-5 pt-4 shadow-[0_18px_45px_rgba(37,61,93,0.10)] min-[1320px]:hidden">
             <form onSubmit={handleSearchSubmit} className="relative mb-4" role="search">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-placeholder)]" />
               <input
@@ -327,12 +327,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      <main className="mx-auto min-h-[calc(100vh-68px)] w-full max-w-[1536px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <main className="mx-auto min-h-[calc(100vh-92px)] w-full max-w-[1728px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {children}
       </main>
 
       <footer className={`border-t border-[var(--color-core-100)] py-4 ${isDashboard ? 'bg-white/70 backdrop-blur-xl' : 'bg-white'}`}>
-        <div className="mx-auto max-w-[1536px] px-4 text-center text-[10px] font-medium text-[var(--color-text-placeholder)]">
+        <div className="mx-auto max-w-[1728px] px-4 text-center text-[10px] font-medium text-[var(--color-text-placeholder)]">
           SIGMA Health Supply &copy; {new Date().getFullYear()} · Healthcare Supply Chain System
         </div>
       </footer>
