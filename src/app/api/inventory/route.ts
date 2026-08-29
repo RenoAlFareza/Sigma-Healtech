@@ -42,7 +42,9 @@ export async function GET(request: Request) {
     items = items.filter((it) => it.product.category.toLowerCase().includes(category));
   }
 
-  if (statusFilter) {
+  if (statusFilter === 'ACTIVE') {
+    items = items.filter((it) => it.qtyOnHand > 0 && it.status !== 'EXPIRED');
+  } else if (statusFilter) {
     items = items.filter((it) => it.status === statusFilter);
   }
 

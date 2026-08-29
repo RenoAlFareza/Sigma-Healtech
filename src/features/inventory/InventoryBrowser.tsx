@@ -3,18 +3,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Boxes, PackageSearch } from 'lucide-react';
-import { Card, DataTable, StatusBadge, Select, Input, Pagination, Skeleton, EmptyState, ErrorState } from '@/shared/ui';
+import { Card, DataTable, StatusBadge, Select, Input, EmptyState, ErrorState } from '@/shared/ui';
 import type { DataTableColumn } from '@/shared/ui';
-import { formatDate, formatQuantity } from '@/shared/lib/format';
+import { formatCurrency, formatDate, formatQuantity } from '@/shared/lib/format';
 import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
-import { listInventory } from './api';
+import { useAuth } from '@/features/auth/AuthProvider';
+import { listInventory, listInventoryLocations } from './api';
 import type { ListInventoryParams } from './api';
-import type { InventoryItem } from '@/shared/types/domain';
+import type { InventoryItem, Location } from '@/shared/types/domain';
 
 const PAGE_SIZE = 20;
 
 const STATUS_OPTIONS = [
   { value: 'ALL', label: 'Semua Status' },
+  { value: 'ACTIVE', label: 'Persediaan Aktif' },
   { value: 'IN_STOCK', label: 'In Stock' },
   { value: 'LOW_STOCK', label: 'Low Stock' },
   { value: 'STOCKOUT', label: 'Stockout' },
@@ -30,7 +32,8 @@ export function InventoryBrowser({
   showStockCardGuide?: boolean;
 }) {
   const router = useRouter();
-  const { activeLocationId } = useActiveLocation();
+  const { activeLocationId, setActiveLocationId } = useActiveLocation();
+  const { locationIds } = useAuth();
 
   const [keyword, setKeyword] = useState('');
   const [submittedKeyword, setSubmittedKeyword] = useState('');
@@ -41,6 +44,7 @@ export function InventoryBrowser({
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!activeLocationId) {
@@ -72,8 +76,29 @@ export function InventoryBrowser({
   }, [activeLocationId, submittedKeyword, category, status, page]);
 
   useEffect(() => {
-    fetchData();
+    const requestId = window.setTimeout(() => void fetchData(), 0);
+    return () => window.clearTimeout(requestId);
   }, [fetchData]);
+
+  useEffect(() => {
+    let active = true;
+    listInventoryLocations()
+      .then((items) => {
+        if (active) setLocations(items);
+      })
+      .catch(() => {
+        if (active) setLocations([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const availableLocations = useMemo(
+    () => locationIds.length > 0 ? locations.filter((location) => locationIds.includes(location.id)) : locations,
+    [locationIds, locations]
+  );
+  const selectedLocation = availableLocations.find((location) => location.id === activeLocationId);
 
   const categories = useMemo(
     () => ['Analgesik/Antipiretik', 'Antibiotik', 'Antasida', 'Antidiare', 'Antiemetik', 'Antihipertensi', 'Antinflamasi', 'Antiseptik', 'Antivirus', 'Bronkodilator', 'Dermatologis', 'Diuretik', 'Ekspektoran', 'Gastrointestinal', 'Hematologi', 'Hormon', 'Imunosupresan', 'Kardiovaskular', 'Kortikosteroid', 'Kulit', 'Lainnya', 'Mineral', 'Mukolitik', 'Nutrisi', 'Obat Bebas', 'Oftalmik', 'Psikotropika', 'Respirasi', 'Saluran Cerna', 'Saluran Napas', 'Steroid', 'Suplementasi', 'Vitamin', 'Vitamin/Mineral'],
@@ -82,23 +107,31 @@ export function InventoryBrowser({
 
   const columns: DataTableColumn<InventoryItem>[] = useMemo(
     () => [
-      { id: 'kfaCode', header: 'SKU', cell: (it) => it.product.kfaCode, isMono: true, width: '110px' },
-      { id: 'name', header: 'Nama Produk', cell: (it) => it.product.name },
-      { id: 'category', header: 'Kategori', cell: (it) => it.product.category },
-      { id: 'lot', header: 'Lot', accessorKey: 'lot', isMono: true },
-      { id: 'expiry', header: 'Kadaluarsa', cell: (it) => formatDate(it.expiry, 'iso'), isMono: true },
-      { id: 'bin', header: 'Bin', accessorKey: 'bin', isMono: true },
-      {
-        id: 'qtyOnHand',
-        header: 'QoH',
-        align: 'right',
-        cell: (it) => formatQuantity(it.qtyOnHand),
-      },
       {
         id: 'status',
         header: 'Status',
         cell: (it) => <StatusBadge status={it.status} size="sm" />,
       },
+      { id: 'kfaCode', header: 'Kode KFA', cell: (it) => it.product.kfaCode, isMono: true, width: '110px' },
+      { id: 'name', header: 'Nama Produk', cell: (it) => it.product.name },
+      { id: 'bin', header: 'Bin / Rak', accessorKey: 'bin', isMono: true },
+      { id: 'lot', header: 'Nomor Lot', accessorKey: 'lot', isMono: true },
+      { id: 'expiry', header: 'Kedaluwarsa', cell: (it) => formatDate(it.expiry, 'iso'), isMono: true },
+      {
+        id: 'qtyOnHand',
+        header: 'Qty On Hand',
+        align: 'right',
+        cell: (it) => formatQuantity(it.qtyOnHand),
+      },
+      {
+        id: 'qtyAvailable',
+        header: 'Qty Available',
+        align: 'right',
+        cell: (it) => formatQuantity(Math.max(0, it.qtyOnHand - (it.qtyReserved ?? 0))),
+      },
+      { id: 'uom', header: 'UOM', cell: (it) => it.product.uom || '—' },
+      { id: 'unitCost', header: 'Harga Satuan', align: 'right', cell: (it) => formatCurrency(it.product.price) },
+      { id: 'totalValue', header: 'Total Nilai', align: 'right', cell: (it) => formatCurrency(it.qtyOnHand * it.product.price) },
     ],
     []
   );
@@ -108,7 +141,15 @@ export function InventoryBrowser({
   const handleSubmitKeyword = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    setSubmittedKeyword(keyword);
+    setSubmittedKeyword(keyword.trim());
+  };
+
+  const handleKeywordChange = (value: string) => {
+    setKeyword(value);
+    if (!value.trim() && submittedKeyword) {
+      setSubmittedKeyword('');
+      setPage(1);
+    }
   };
 
   if (!activeLocationId) {
@@ -134,18 +175,33 @@ export function InventoryBrowser({
         </div>
       )}
       <Card
-        title="Inventori"
-        subtitle="Stok per item/lokasi/bin"
+        title="Rincian Persediaan per Lot dan Bin"
+        subtitle={`Informasi quantity, kedaluwarsa, posisi bin/rak, dan nilai stok di ${selectedLocation?.name ?? 'lokasi aktif'}`}
         padding="md"
       >
         <div className="flex flex-col md:flex-row gap-3 md:items-end">
+          <div className="w-full md:w-64">
+            <Select
+              id="inventory-location"
+              label="Gudang / Lokasi"
+              value={activeLocationId}
+              onChange={(e) => {
+                setActiveLocationId(e.target.value);
+                setPage(1);
+              }}
+              options={availableLocations.map((location) => ({
+                value: location.id,
+                label: `${location.name} (${location.code})`,
+              }))}
+            />
+          </div>
           <form onSubmit={handleSubmitKeyword} className="flex-1 md:max-w-xs">
             <Input
               id="keyword"
               label="Cari Produk"
               placeholder="Nama, SKU, atau lot…"
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              onChange={(e) => handleKeywordChange(e.target.value)}
               leftIcon={<Search className="w-4 h-4" />}
             />
           </form>

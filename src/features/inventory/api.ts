@@ -1,5 +1,5 @@
 import { apiFetch } from '@/api';
-import type { InventoryItem, StockTransaction } from '@/shared/types/domain';
+import type { InventoryItem, Location, StockTransaction } from '@/shared/types/domain';
 import type { Product } from '@/shared/types/domain';
 
 export interface ListInventoryParams {
@@ -13,6 +13,11 @@ export interface ListInventoryParams {
 
 export interface ListInventoryResponse {
   data: InventoryItem[];
+  totalCount: number;
+}
+
+export interface ListInventoryLocationsResponse {
+  data: Location[];
   totalCount: number;
 }
 
@@ -86,4 +91,10 @@ export async function getReorderReport(params: {
 }): Promise<ReorderReportResponse> {
   const path = `/inventory/reorder?locationId=${params.locationId}`;
   return apiFetch<ReorderReportResponse>(path);
+}
+
+/** Fetch warehouse, depot, ward, and pharmacy locations available to inventory. */
+export async function listInventoryLocations(): Promise<Location[]> {
+  const response = await apiFetch<ListInventoryLocationsResponse>('/locations');
+  return response.data;
 }

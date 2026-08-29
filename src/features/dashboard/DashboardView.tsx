@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, MoreHorizontal, PackageOpen, Plus, Share2, WalletCards } from 'lucide-react';
 import { ErrorState, Skeleton } from '@/shared/ui';
+import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
 import { getDashboardSummary, getDashboardTrend } from './api';
 import type { DashboardSummary, DashboardTrendData, OperationalSchedule, RecentActivity, WeeklyFulfillmentPoint } from './api';
 
@@ -48,10 +49,11 @@ function MetricVisual({ variant }: { variant: MetricCardProps['visual'] }) {
 
 function MetricCard({ title, value, unit, detail, href, visual }: MetricCardProps) {
   return (
-    <article className={`${PANEL_CLASS} group flex min-h-[146px] flex-col justify-between p-5 transition-shadow hover:shadow-[0_4px_14px_rgba(27,42,36,0.07)]`}>
+    <article className={`${PANEL_CLASS} group relative flex min-h-[146px] flex-col justify-between p-5 transition-shadow hover:shadow-[0_4px_14px_rgba(27,42,36,0.07)]`}>
+      <Link href={href} aria-label={`Lihat detail ${title}`} className="absolute inset-0 z-10 rounded-[20px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d6a4f]" />
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#6b7c74]">{title}</p>
-        <Link href={href} aria-label={`Lihat detail ${title}`} className="grid h-6 w-6 place-items-center rounded-full text-[#9ca8a2] transition hover:bg-[#f1f5f3] hover:text-[#2d6a4f]"><MoreHorizontal className="h-4 w-4" /></Link>
+        <span className="grid h-6 w-6 place-items-center rounded-full text-[#9ca8a2] transition group-hover:bg-[#f1f5f3] group-hover:text-[#2d6a4f]"><MoreHorizontal className="h-4 w-4" /></span>
       </div>
       <div className="mt-1.5 flex items-baseline gap-1.5">
         <span className="text-[30px] font-bold leading-none tracking-[-0.045em] text-[#1b2a24] tabular-nums">{value}</span>
@@ -203,6 +205,7 @@ function DashboardSkeleton() {
 }
 
 export function DashboardView() {
+  const { activeLocationId } = useActiveLocation();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trend, setTrend] = useState<DashboardTrendData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -212,7 +215,7 @@ export function DashboardView() {
     setLoading(true);
     setError(null);
     try {
-      const [summaryResponse, trendResponse] = await Promise.all([getDashboardSummary(), getDashboardTrend()]);
+      const [summaryResponse, trendResponse] = await Promise.all([getDashboardSummary(activeLocationId), getDashboardTrend()]);
       setSummary(summaryResponse);
       setTrend(trendResponse);
     } catch (fetchError) {
@@ -224,7 +227,7 @@ export function DashboardView() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getDashboardSummary(), getDashboardTrend()])
+    Promise.all([getDashboardSummary(activeLocationId), getDashboardTrend()])
       .then(([summaryResponse, trendResponse]) => {
         if (!active) return;
         setSummary(summaryResponse);
@@ -235,7 +238,7 @@ export function DashboardView() {
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [activeLocationId]);
 
   const handleShareReport = async () => {
     const shareData = { title: 'SIGMA Dashboard Overview', text: 'Ringkasan operasional supply chain SIGMA.', url: window.location.href };
@@ -267,7 +270,7 @@ export function DashboardView() {
       </div>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ringkasan inventori">
-        <MetricCard title="Total Produk" value={numberFormatter.format(summary.totalProducts)} unit="SKU" href="/products" visual="pulse" detail={<>Produk aktif tersedia di <strong className="text-[#2d6a4f]">seluruh jaringan layanan</strong></>} />
+        <MetricCard title="Persediaan Aktif" value={numberFormatter.format(summary.activeInventoryQuantity)} unit="UNIT" href="/inventory?status=ACTIVE" visual="pulse" detail={<><strong className="text-[#2d6a4f]">{numberFormatter.format(summary.activeLotCount)} lot</strong> pada {numberFormatter.format(summary.activeBinCount)} bin di {summary.locationName}</>} />
         <MetricCard title="Stok Menipis" value={numberFormatter.format(summary.lowStockCount)} unit="SKU" href="/inventory?status=LOW_STOCK" visual="curve" detail={<>Item telah mencapai <strong className="text-[#2d6a4f]">batas stok minimum</strong></>} />
         <MetricCard title="Stok Habis" value={numberFormatter.format(summary.stockoutCount)} unit="SKU" href="/inventory?status=OUT_OF_STOCK" visual="bars" detail={<>Item membutuhkan <strong className="text-[#2d6a4f]">tindak lanjut segera</strong></>} />
         <MetricCard title="Pending Requisition" value={numberFormatter.format(summary.pendingRequisitionsCount)} unit="REQ" href="/requisitions?status=SUBMITTED" visual="steps" detail={<>Permintaan masih <strong className="text-[#2d6a4f]">menunggu persetujuan</strong></>} />

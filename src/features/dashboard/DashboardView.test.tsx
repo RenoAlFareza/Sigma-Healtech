@@ -8,9 +8,18 @@ vi.mock('./api', () => ({
   getDashboardSummary: vi.fn(),
   getDashboardTrend: vi.fn(),
 }));
+vi.mock('@/features/shell/ActiveLocationContext', () => ({
+  useActiveLocation: () => ({ activeLocationId: 'wh-pusat', setActiveLocationId: vi.fn() }),
+}));
 
 const summary = {
   totalProducts: 150,
+  activeInventoryQuantity: 458,
+  activeLotCount: 7,
+  activeBinCount: 5,
+  stockedSkuCount: 5,
+  locationId: 'wh-pusat',
+  locationName: 'Gudang Farmasi Pusat',
   lowStockCount: 6,
   stockoutCount: 1,
   expiring30DaysCount: 3,
@@ -64,7 +73,8 @@ describe('DashboardView Component', () => {
     render(<DashboardView />);
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Dashboard Overview' })).toBeInTheDocument());
-    expect(screen.getByText('Total Produk')).toBeInTheDocument();
+    expect(screen.getByText('Persediaan Aktif')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lihat detail Persediaan Aktif' })).toHaveAttribute('href', '/inventory?status=ACTIVE');
     expect(screen.getByText('Stok Menipis')).toBeInTheDocument();
     expect(screen.getByText('Stok Habis')).toBeInTheDocument();
     expect(screen.getByText('Pending Requisition')).toBeInTheDocument();

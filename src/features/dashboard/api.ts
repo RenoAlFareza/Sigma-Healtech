@@ -2,6 +2,12 @@ import { apiFetch } from '@/api/client';
 
 export interface DashboardSummary {
   totalProducts: number;
+  activeInventoryQuantity: number;
+  activeLotCount: number;
+  activeBinCount: number;
+  stockedSkuCount: number;
+  locationId: string | null;
+  locationName: string;
   lowStockCount: number;
   stockoutCount: number;
   expiring30DaysCount: number;
@@ -86,8 +92,9 @@ export interface DashboardTrendData {
   recentActivities: RecentActivity[];
 }
 
-export async function getDashboardSummary(): Promise<DashboardSummary> {
-  return apiFetch<DashboardSummary>('/dashboard/summary');
+export async function getDashboardSummary(locationId?: string | null): Promise<DashboardSummary> {
+  const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : '';
+  return apiFetch<DashboardSummary>(`/dashboard/summary${query}`);
 }
 
 export async function getDashboardTrend(): Promise<DashboardTrendData> {

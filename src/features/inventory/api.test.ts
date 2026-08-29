@@ -8,6 +8,7 @@ vi.mock('@/api', async (importOriginal) => {
 
 import {
   listInventory,
+  listInventoryLocations,
   getStockCard,
   getReorderReport,
 } from './api';
@@ -69,6 +70,16 @@ describe('inventory api', () => {
     await listInventory({ locationId: 'wh-pusat' });
 
     expect(mockApiFetch).toHaveBeenCalledWith('/inventory?locationId=wh-pusat');
+  });
+
+  it('listInventoryLocations fetches warehouse and service locations', async () => {
+    const locations = [{ id: 'wh-pusat', name: 'Gudang Farmasi Pusat', code: 'GFP', type: 'WAREHOUSE' as const }];
+    mockApiFetch.mockResolvedValue({ data: locations, totalCount: 1 });
+
+    const result = await listInventoryLocations();
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/locations');
+    expect(result).toEqual(locations);
   });
 
   it('getStockCard fetches the stock card for a product+location', async () => {

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Browse location-scoped stock.',
 };
 
-const INVENTORY_STATUSES = ['ALL', 'IN_STOCK', 'LOW_STOCK', 'STOCKOUT', 'EXPIRING', 'EXPIRED'];
+const INVENTORY_STATUSES = ['ALL', 'ACTIVE', 'IN_STOCK', 'LOW_STOCK', 'STOCKOUT', 'EXPIRING', 'EXPIRED'];
 
 export default async function InventoryPage({ searchParams }: PageProps<'/inventory'>) {
   const params = await searchParams;
