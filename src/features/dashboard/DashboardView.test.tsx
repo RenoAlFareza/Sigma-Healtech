@@ -25,6 +25,8 @@ const summary = {
   expiring30DaysCount: 3,
   openInboundQuantity: 100,
   openInboundReceiptCount: 1,
+  inProgressShipmentCount: 1,
+  inProgressShipmentQuantity: 20,
   pendingRequisitionsCount: 9,
   fillRatePercentage: 98.2,
 };
@@ -80,7 +82,9 @@ describe('DashboardView Component', () => {
     expect(screen.getByText('Penerimaan Berjalan')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Lihat detail Penerimaan Berjalan' })).toHaveAttribute('href', '/inbound');
     expect(screen.getByText('1 dokumen')).toBeInTheDocument();
-    expect(screen.getByText('Stok Habis')).toBeInTheDocument();
+    expect(screen.getByText('Pengiriman Berjalan')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lihat detail Pengiriman Berjalan' })).toHaveAttribute('href', '/outbound');
+    expect(screen.getByText('20 unit')).toBeInTheDocument();
     expect(screen.getByText('Pending Requisition')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Fulfillment Progress Overview' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Agenda Operasional' })).toBeInTheDocument();

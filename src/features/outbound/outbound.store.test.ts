@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   resetMovements,
   createMovement,
-  getMovementById,
   updateMovementStatus,
   dispatchMovement,
   listMovements,
@@ -89,6 +88,11 @@ describe('outbound store', () => {
 
   it('lists movements with status filter', () => {
     expect(listMovements({ status: 'PICKING' }).length).toBe(1); // seeded
+  });
+
+  it('lists movements for the origin warehouse', () => {
+    expect(listMovements({ originId: 'wh-pusat' })).toHaveLength(1);
+    expect(listMovements({ originId: 'depo-igd' })).toHaveLength(0);
   });
 
   it('dispatch does not mutate stock on failure (two-phase)', () => {

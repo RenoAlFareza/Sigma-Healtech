@@ -13,6 +13,8 @@ export interface DashboardSummary {
   expiring30DaysCount: number;
   openInboundQuantity: number;
   openInboundReceiptCount: number;
+  inProgressShipmentCount: number;
+  inProgressShipmentQuantity: number;
   pendingRequisitionsCount: number;
   fillRatePercentage: number;
 }

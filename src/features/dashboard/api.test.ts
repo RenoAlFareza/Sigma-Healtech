@@ -25,6 +25,8 @@ describe('Dashboard API', () => {
       expiring30DaysCount: 8,
       openInboundQuantity: 100,
       openInboundReceiptCount: 1,
+      inProgressShipmentCount: 1,
+      inProgressShipmentQuantity: 20,
       pendingRequisitionsCount: 14,
       fillRatePercentage: 96.5,
     };

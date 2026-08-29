@@ -3,6 +3,7 @@ import { getDb } from '@/api/_fixtures/store';
 import { getStockForLocation } from '@/api/_fixtures/inventory';
 import { getStockStatus } from '@/features/inventory/stockStatus';
 import { listReceipts } from '@/api/_fixtures/inbound';
+import { listMovements } from '@/api/_fixtures/outbound';
 
 export async function GET(request: Request) {
   const { products, locations } = getDb();
@@ -31,6 +32,15 @@ export async function GET(request: Request) {
     ),
     0
   );
+  const inProgressShipments = listMovements({ originId: requestedLocationId || undefined })
+    .filter((movement) => movement.status !== 'RECEIVED');
+  const inProgressShipmentQuantity = inProgressShipments.reduce(
+    (movementTotal, movement) => movementTotal + movement.items.reduce(
+      (itemTotal, item) => itemTotal + item.qty,
+      0
+    ),
+    0
+  );
 
   return NextResponse.json({
     totalProducts,
@@ -45,6 +55,8 @@ export async function GET(request: Request) {
     expiring30DaysCount,
     openInboundQuantity,
     openInboundReceiptCount: openInboundReceipts.length,
+    inProgressShipmentCount: inProgressShipments.length,
+    inProgressShipmentQuantity,
     pendingRequisitionsCount: 7,
     fillRatePercentage: 97.4,
   });
