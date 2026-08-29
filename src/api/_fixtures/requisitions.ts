@@ -85,11 +85,13 @@ function seedRequisitions(): Requisition[] {
 export function listRequisitions(filter?: {
   status?: RequisitionStatus;
   originId?: string;
+  destinationId?: string;
   requestedBy?: string;
 }): Requisition[] {
   return state.items.filter((r) => {
     if (filter?.status && r.status !== filter.status) return false;
     if (filter?.originId && r.originId !== filter.originId) return false;
+    if (filter?.destinationId && r.destinationId !== filter.destinationId) return false;
     if (filter?.requestedBy && r.requestedBy !== filter.requestedBy) return false;
     return true;
   });

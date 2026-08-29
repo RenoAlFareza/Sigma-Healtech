@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DashboardView } from './DashboardView';
 import * as dashboardApi from './api';
-import type { DashboardTrendData } from './api';
+import type { DashboardSummary, DashboardTrendData } from './api';
 
 vi.mock('./api', () => ({
   getDashboardSummary: vi.fn(),
@@ -27,6 +27,8 @@ const summary = {
   openInboundReceiptCount: 1,
   inProgressShipmentCount: 1,
   inProgressShipmentQuantity: 20,
+  inProgressRequisitionCount: 3,
+  inProgressRequisitionQuantity: 110,
   pendingRequisitionsCount: 9,
   fillRatePercentage: 98.2,
 };
@@ -85,7 +87,9 @@ describe('DashboardView Component', () => {
     expect(screen.getByText('Pengiriman Berjalan')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Lihat detail Pengiriman Berjalan' })).toHaveAttribute('href', '/outbound');
     expect(screen.getByText('20 unit')).toBeInTheDocument();
-    expect(screen.getByText('Pending Requisition')).toBeInTheDocument();
+    expect(screen.getByText('Permintaan Diproses')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lihat detail Permintaan Diproses' })).toHaveAttribute('href', '/requisitions');
+    expect(screen.getByText('110 unit')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Fulfillment Progress Overview' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Agenda Operasional' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Riwayat Permintaan' })).toBeInTheDocument();
@@ -100,6 +104,22 @@ describe('DashboardView Component', () => {
     render(<DashboardView />);
     expect(await screen.findByText('Belum ada transaksi terbaru.')).toBeInTheDocument();
     expect(screen.getByText('Belum ada aktivitas terbaru.')).toBeInTheDocument();
+  });
+
+  it('renders zero instead of NaN when KPI values are missing', async () => {
+    const summaryWithMissingValues = {
+      ...summary,
+      openInboundQuantity: undefined,
+      inProgressShipmentCount: undefined,
+      inProgressRequisitionCount: undefined,
+    } as unknown as DashboardSummary;
+    (dashboardApi.getDashboardSummary as ReturnType<typeof vi.fn>).mockResolvedValue(summaryWithMissingValues);
+    (dashboardApi.getDashboardTrend as ReturnType<typeof vi.fn>).mockResolvedValue(trend);
+    render(<DashboardView />);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Dashboard Overview' })).toBeInTheDocument());
+    expect(screen.queryByText('NaN')).not.toBeInTheDocument();
+    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(3);
   });
 
   it('renders error state if API fails', async () => {

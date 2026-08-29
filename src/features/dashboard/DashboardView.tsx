@@ -13,6 +13,15 @@ const numberFormatter = new Intl.NumberFormat('id-ID');
 const dateFormatter = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 const PANEL_CLASS = 'rounded-[20px] border border-[#e5eae7] bg-white shadow-[0_2px_8px_rgba(27,42,36,0.04)]';
 
+function safeNumber(value: unknown): number {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function formatNumber(value: unknown): string {
+  return numberFormatter.format(safeNumber(value));
+}
+
 interface MetricCardProps {
   title: string;
   value: string | number;
@@ -270,10 +279,10 @@ export function DashboardView() {
       </div>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ringkasan inventori">
-        <MetricCard title="Persediaan Aktif" value={numberFormatter.format(summary.activeInventoryQuantity)} unit="UNIT" href="/inventory?status=ACTIVE" visual="pulse" detail={<><strong className="text-[#2d6a4f]">{numberFormatter.format(summary.activeLotCount)} lot</strong> pada {numberFormatter.format(summary.activeBinCount)} bin di {summary.locationName}</>} />
-        <MetricCard title="Penerimaan Berjalan" value={numberFormatter.format(summary.openInboundQuantity)} unit="UNIT" href="/inbound" visual="curve" detail={<><strong className="text-[#2d6a4f]">{numberFormatter.format(summary.openInboundReceiptCount)} dokumen</strong> menuju {summary.locationName}</>} />
-        <MetricCard title="Pengiriman Berjalan" value={numberFormatter.format(summary.inProgressShipmentCount)} unit="KIRIMAN" href="/outbound" visual="bars" detail={<><strong className="text-[#2d6a4f]">{numberFormatter.format(summary.inProgressShipmentQuantity)} unit</strong> masih diproses dari {summary.locationName}</>} />
-        <MetricCard title="Pending Requisition" value={numberFormatter.format(summary.pendingRequisitionsCount)} unit="REQ" href="/requisitions?status=SUBMITTED" visual="steps" detail={<>Permintaan masih <strong className="text-[#2d6a4f]">menunggu persetujuan</strong></>} />
+        <MetricCard title="Persediaan Aktif" value={formatNumber(summary.activeInventoryQuantity)} unit="UNIT" href="/inventory?status=ACTIVE" visual="pulse" detail={<><strong className="text-[#2d6a4f]">{formatNumber(summary.activeLotCount)} lot</strong> pada {formatNumber(summary.activeBinCount)} bin di {summary.locationName}</>} />
+        <MetricCard title="Penerimaan Berjalan" value={formatNumber(summary.openInboundQuantity)} unit="UNIT" href="/inbound" visual="curve" detail={<><strong className="text-[#2d6a4f]">{formatNumber(summary.openInboundReceiptCount)} dokumen</strong> menuju {summary.locationName}</>} />
+        <MetricCard title="Pengiriman Berjalan" value={formatNumber(summary.inProgressShipmentCount)} unit="KIRIMAN" href="/outbound" visual="bars" detail={<><strong className="text-[#2d6a4f]">{formatNumber(summary.inProgressShipmentQuantity)} unit</strong> masih diproses dari {summary.locationName}</>} />
+        <MetricCard title="Permintaan Diproses" value={formatNumber(summary.inProgressRequisitionCount)} unit="PERMINTAAN" href="/requisitions" visual="steps" detail={<><strong className="text-[#2d6a4f]">{formatNumber(summary.inProgressRequisitionQuantity)} unit</strong> masih dalam alur pemenuhan</>} />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-12" aria-label="Fulfillment dan agenda">
@@ -294,7 +303,7 @@ export function DashboardView() {
               <Link key={transaction.id} href={transaction.href} className="flex items-center justify-between gap-3 rounded-xl border border-[#edf1ee] bg-[#f8faf9] p-3 transition hover:bg-[#f1f5f3]">
                 <span className="flex min-w-0 items-center gap-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[#e5eae7] bg-white text-[#6b7c74]"><PackageOpen className="h-4 w-4" /></span>
-                  <span className="min-w-0"><strong className="block truncate text-xs text-[#1b2a24]">{transaction.reference}</strong><small className="block text-[10px] font-bold text-[#1b2a24]">{numberFormatter.format(transaction.quantity)} unit</small></span>
+                  <span className="min-w-0"><strong className="block truncate text-xs text-[#1b2a24]">{transaction.reference}</strong><small className="block text-[10px] font-bold text-[#1b2a24]">{formatNumber(transaction.quantity)} unit</small></span>
                 </span>
                 <span className="shrink-0 text-right"><em className="inline-block rounded-full bg-[#d8f3dc] px-2.5 py-1 text-[9px] font-bold not-italic text-[#2d6a4f]">{transaction.status}</em><small className="mt-1 block text-[9px] text-[#9ca8a2]">{dateFormatter.format(new Date(transaction.occurredAt))}</small></span>
               </Link>

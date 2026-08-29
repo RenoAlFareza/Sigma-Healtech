@@ -15,6 +15,8 @@ export interface DashboardSummary {
   openInboundReceiptCount: number;
   inProgressShipmentCount: number;
   inProgressShipmentQuantity: number;
+  inProgressRequisitionCount: number;
+  inProgressRequisitionQuantity: number;
   pendingRequisitionsCount: number;
   fillRatePercentage: number;
 }

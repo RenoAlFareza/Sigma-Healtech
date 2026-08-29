@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createRequisition,
   getRequisitionById,
+  listRequisitions,
   resetRequisitions,
   updateRequisitionStatus,
 } from '@/api/_fixtures/requisitions';
@@ -62,6 +63,11 @@ describe('requisition store transition legality', () => {
     const res = updateRequisitionStatus('NOPE', 'APPROVED');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toMatch(/not found/i);
+  });
+
+  it('filters requisitions by destination warehouse', () => {
+    expect(listRequisitions({ destinationId: 'wh-pusat' })).toHaveLength(3);
+    expect(listRequisitions({ destinationId: 'depo-igd' })).toHaveLength(0);
   });
 
   it('preserves existing item adjustments when only transitioning', () => {

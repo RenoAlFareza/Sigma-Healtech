@@ -27,6 +27,8 @@ describe('Dashboard API', () => {
       openInboundReceiptCount: 1,
       inProgressShipmentCount: 1,
       inProgressShipmentQuantity: 20,
+      inProgressRequisitionCount: 3,
+      inProgressRequisitionQuantity: 110,
       pendingRequisitionsCount: 14,
       fillRatePercentage: 96.5,
     };

@@ -8,9 +8,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = (searchParams.get('status') || undefined) as RequisitionStatus | undefined;
   const originId = searchParams.get('originId') || undefined;
+  const destinationId = searchParams.get('destinationId') || undefined;
   const requestedBy = searchParams.get('requestedBy') || undefined;
 
-  const data = listRequisitions({ status, originId, requestedBy });
+  const data = listRequisitions({ status, originId, destinationId, requestedBy });
 
   return NextResponse.json({
     data,
