@@ -8,12 +8,14 @@ vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: vi.fn(),
 }));
 
+const navigationState = vi.hoisted(() => ({ pathname: '/dashboard', search: '' }));
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
-  usePathname: () => '/dashboard',
+  usePathname: () => navigationState.pathname,
+  useSearchParams: () => new URLSearchParams(navigationState.search),
 }));
 
 describe('AppShell Component', () => {
@@ -21,6 +23,8 @@ describe('AppShell Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    navigationState.pathname = '/dashboard';
+    navigationState.search = '';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ lowStockCount: 5, stockoutCount: 2, pendingRequisitionsCount: 7 }),
@@ -118,6 +122,42 @@ describe('AppShell Component', () => {
     fireEvent.click(trigger);
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: /Kartu Stok & Lot/i })).toHaveAttribute('href', '/inventory?view=stock-card');
+  });
+
+  it('keeps only the most specific route active and clears the previous open menu', () => {
+    navigationState.pathname = '/inventory/reorder';
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [
+        { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+        {
+          id: 'inventory',
+          label: 'Inventory',
+          groups: [{
+            id: 'stock',
+            label: 'Persediaan',
+            items: [
+              { id: 'inventory-view', label: 'Lihat Persediaan', href: '/inventory' },
+              { id: 'inventory-reorder', label: 'Rekomendasi Reorder', href: '/inventory/reorder' },
+            ],
+          }],
+        },
+      ],
+      logout: mockLogout,
+    });
+
+    render(<ActiveLocationProvider><AppShell><div>Content</div></AppShell></ActiveLocationProvider>);
+
+    const inventoryTrigger = screen.getByRole('button', { name: /Inventory/i });
+    fireEvent.click(inventoryTrigger);
+    expect(screen.getByRole('link', { name: 'Rekomendasi Reorder' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Lihat Persediaan' })).not.toHaveAttribute('aria-current');
+
+    fireEvent.click(screen.getAllByRole('link', { name: 'Dashboard' })[0]);
+    expect(inventoryTrigger).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('triggers logout on clicking logout button', async () => {

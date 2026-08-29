@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowDownToLine,
@@ -48,9 +48,54 @@ function isRouteActive(pathname: string, href: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-function isMenuActive(pathname: string, item: MenuItem) {
-  if (item.href) return isRouteActive(pathname, item.href);
-  return item.groups?.some((group) => group.items.some((destination) => isRouteActive(pathname, destination.href))) ?? false;
+interface SearchParamReader {
+  get(name: string): string | null;
+}
+
+function routeMatchScore(pathname: string, searchParams: SearchParamReader, href: string, allowQueryFallback = false) {
+  const [path, query = ''] = href.split('?');
+  if (pathname !== path && !pathname.startsWith(`${path}/`)) return -1;
+
+  const expectedParams = new URLSearchParams(query);
+  let queryScore = 0;
+  for (const [key, value] of expectedParams) {
+    if (searchParams.get(key) !== value) {
+      if (!allowQueryFallback) return -1;
+      queryScore = -100;
+      break;
+    }
+    queryScore += 20;
+  }
+
+  return path.length * 100 + (pathname === path ? 10 : 0) + queryScore;
+}
+
+function activeMenuId(pathname: string, searchParams: SearchParamReader, menu: MenuItem[]) {
+  let bestMatch: { id: string; score: number } | null = null;
+
+  for (const item of menu) {
+    const hrefs = item.href
+      ? [item.href]
+      : item.groups?.flatMap((group) => group.items.map((destination) => destination.href)) ?? [];
+
+    for (const href of hrefs) {
+      const score = routeMatchScore(pathname, searchParams, href, true);
+      if (score >= 0 && (!bestMatch || score > bestMatch.score)) bestMatch = { id: item.id, score };
+    }
+  }
+
+  return bestMatch?.id ?? null;
+}
+
+function activeDestinationId(pathname: string, searchParams: SearchParamReader, item: MenuItem) {
+  let bestMatch: { id: string; score: number } | null = null;
+
+  for (const destination of item.groups?.flatMap((group) => group.items) ?? []) {
+    const score = routeMatchScore(pathname, searchParams, destination.href);
+    if (score >= 0 && (!bestMatch || score > bestMatch.score)) bestMatch = { id: destination.id, score };
+  }
+
+  return bestMatch?.id ?? null;
 }
 
 function firstMenuHref(item?: MenuItem) {
@@ -78,6 +123,7 @@ interface DashboardNotificationSummary {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user, role, menu, logout } = useAuth();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -111,6 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return href ? [{ ...candidate, href }] : [];
     });
   }, [menu]);
+  const currentActiveMenuId = activeMenuId(pathname, searchParams, menu);
 
   const closePopovers = () => {
     setOpenMenuId(null);
@@ -173,7 +220,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside ref={sidebarRef} className="sticky top-0 z-50 hidden h-screen w-20 shrink-0 flex-col items-center justify-between border-r border-[#e5eae7] bg-white py-6 shadow-[1px_0_4px_rgba(27,42,36,0.03)] min-[1180px]:flex" aria-label="Navigasi pintas">
         <div className="flex w-full flex-col items-center gap-6 px-3">
           {quickAction ? (
-            <Link href={quickAction.href} title={quickAction.label} aria-label={quickAction.label} className="group grid h-12 w-12 place-items-center rounded-2xl bg-[#1b2a24] text-white shadow-md transition hover:bg-[#2d6a4f]">
+            <Link href={quickAction.href} onClick={closePopovers} title={quickAction.label} aria-label={quickAction.label} className="group grid h-12 w-12 place-items-center rounded-2xl bg-[#1b2a24] text-white shadow-md transition hover:bg-[#2d6a4f]">
               <Plus className="h-6 w-6" />
             </Link>
           ) : (
@@ -182,9 +229,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="h-px w-8 bg-[#e5eae7]" />
           <nav className="flex w-full flex-col items-center gap-3">
             {shortcutItems.map(({ item, href, icon: Icon, label }) => {
-              const active = item ? isMenuActive(pathname, item) : isRouteActive(pathname, href);
+              const active = item ? currentActiveMenuId === item.id : isRouteActive(pathname, href);
               return (
-                <Link key={`${label}-${href}`} href={href} title={label} aria-label={label} aria-current={active ? 'page' : undefined} className={`grid h-12 w-12 place-items-center rounded-2xl transition ${active ? 'bg-[#e8f5e9] text-[#2d6a4f] shadow-sm' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#2d6a4f]'}`}>
+                <Link key={`${label}-${href}`} href={href} onClick={closePopovers} title={label} aria-label={label} aria-current={active ? 'page' : undefined} className={`grid h-12 w-12 place-items-center rounded-2xl transition ${active ? 'bg-[#e8f5e9] text-[#2d6a4f] shadow-sm' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#2d6a4f]'}`}>
                   <Icon className="h-5 w-5" />
                 </Link>
               );
@@ -211,12 +258,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <nav aria-label="Navigasi utama" className="hidden items-center gap-1 min-[1180px]:flex">
               {menu.map((item) => {
                 const Icon = NAV_ICONS[item.id] || LayoutDashboard;
-                const active = isMenuActive(pathname, item);
+                const active = currentActiveMenuId === item.id;
+                const currentActiveDestinationId = activeDestinationId(pathname, searchParams, item);
                 const hasChildren = Boolean(item.groups?.length);
                 const triggerClass = `flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d6a4f] ${active || openMenuId === item.id ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#1b2a24]'}`;
 
                 if (!hasChildren && item.href) {
-                  return <Link key={item.id} href={item.href} aria-current={active ? 'page' : undefined} className={triggerClass}><Icon className="h-3.5 w-3.5" />{item.label}</Link>;
+                  return <Link key={item.id} href={item.href} onClick={closePopovers} aria-current={active ? 'page' : undefined} className={triggerClass}><Icon className="h-3.5 w-3.5" />{item.label}</Link>;
                 }
 
                 return (
@@ -231,7 +279,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <h2 id={`popover-group-${group.id}`} className="flex items-center gap-1.5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#9ca8a2]"><Folder className="h-3 w-3 text-[#2d6a4f]" />/{group.label}</h2>
                             <div className="mt-1 space-y-0.5">
                               {group.items.map((destination) => (
-                                <Link key={destination.id} href={destination.href} onClick={() => setOpenMenuId(null)} className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-[11px] font-semibold transition ${isRouteActive(pathname, destination.href) ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#31483c] hover:bg-[#f1f5f3] hover:text-[#2d6a4f]'}`}>
+                                <Link key={destination.id} href={destination.href} onClick={closePopovers} aria-current={currentActiveDestinationId === destination.id ? 'page' : undefined} className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-[11px] font-semibold transition ${currentActiveDestinationId === destination.id ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#31483c] hover:bg-[#f1f5f3] hover:text-[#2d6a4f]'}`}>
                                   <span className="truncate">{destination.label}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
                                 </Link>
                               ))}
@@ -308,7 +356,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <nav className="mt-5 flex-1 space-y-2 overflow-y-auto">
                 {menu.map((item) => {
                   const Icon = NAV_ICONS[item.id] || LayoutDashboard;
-                  const active = isMenuActive(pathname, item);
+                  const active = currentActiveMenuId === item.id;
                   if (item.href) {
                     return <Link key={item.id} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-bold ${active ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#52655a] hover:bg-[#f1f5f3]'}`}><Icon className="h-4 w-4" />{item.label}</Link>;
                   }
