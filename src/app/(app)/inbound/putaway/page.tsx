@@ -15,7 +15,7 @@ export default async function PutawayPage({
 }) {
   const { id } = await searchParams;
   return (
-    <div className="p-6">
+    <div className="w-full">
       {id ? (
         <ToastProvider>
           <Putaway id={id} />

@@ -16,7 +16,7 @@ export default async function ReportsPage({ searchParams }: PageProps<'/reports'
     : 'summary';
 
   return (
-    <div className="p-6">
+    <div className="w-full">
       <ReportsHub key={initialType} initialType={initialType} />
     </div>
   );

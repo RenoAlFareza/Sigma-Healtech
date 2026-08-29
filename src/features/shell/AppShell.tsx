@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
@@ -12,23 +12,26 @@ import {
   ChartNoAxesColumnIncreasing,
   ChevronDown,
   ChevronRight,
-  Eye,
+  CircleHelp,
+  Folder,
   LayoutDashboard,
   LogOut,
   Menu,
-  PackageSearch,
   Pill,
+  Plus,
+  Repeat2,
   Search,
   Settings2,
   ShoppingCart,
+  TrendingUp,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthProvider';
-import type { MenuItem } from '@/shared/config/menu';
+import type { MenuDestination, MenuItem } from '@/shared/config/menu';
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
-  inventory: PackageSearch,
+  inventory: Boxes,
   outbound: ArrowUpFromLine,
   inbound: ArrowDownToLine,
   purchasing: ShoppingCart,
@@ -50,33 +53,71 @@ function isMenuActive(pathname: string, item: MenuItem) {
   return item.groups?.some((group) => group.items.some((destination) => isRouteActive(pathname, destination.href))) ?? false;
 }
 
+function firstMenuHref(item?: MenuItem) {
+  return item?.href ?? item?.groups?.[0]?.items[0]?.href;
+}
+
 function getInitials(name?: string) {
   if (!name) return 'US';
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
+  return name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+}
+
+function allDestinations(menu: MenuItem[]) {
+  return menu.flatMap((item) => item.groups?.flatMap((group) => group.items) ?? []);
+}
+
+function findDestination(destinations: MenuDestination[], ids: string[]) {
+  return ids.map((id) => destinations.find((item) => item.id === id)).find(Boolean);
+}
+
+interface DashboardNotificationSummary {
+  lowStockCount: number;
+  stockoutCount: number;
+  pendingRequisitionsCount: number;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, role, menu, logout } = useAuth();
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [openMobileSectionId, setOpenMobileSectionId] = useState<string | null>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
-  const megaMenuRef = useRef<HTMLDivElement>(null);
-  const closeMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notificationSummary, setNotificationSummary] = useState<DashboardNotificationSummary | null>(null);
+  const desktopPopoverRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
 
-  const isDashboard = pathname === '/dashboard';
+  const destinations = useMemo(() => allDestinations(menu), [menu]);
+  const quickAction = useMemo(() => findDestination(destinations, [
+    'outbound-requisition-create',
+    'purchasing-create',
+    'products-create',
+  ]), [destinations]);
+
+  const shortcutItems = useMemo(() => {
+    const candidates = [
+      { item: menu.find((entry) => entry.id === 'dashboard'), icon: LayoutDashboard, label: 'Dashboard' },
+      { item: menu.find((entry) => entry.id === 'inventory'), icon: Boxes, label: 'Inventory' },
+      { item: menu.find((entry) => entry.id === 'outbound') ?? menu.find((entry) => entry.id === 'purchasing'), icon: Repeat2, label: 'Transaksi' },
+      { item: menu.find((entry) => entry.id === 'reporting'), icon: TrendingUp, label: 'Fill rate' },
+    ];
+    return candidates.flatMap((candidate) => {
+      const href = firstMenuHref(candidate.item);
+      return href ? [{ ...candidate, href }] : [];
+    });
+  }, [menu]);
+
+  const closePopovers = () => {
+    setOpenMenuId(null);
+    setIsProfileOpen(false);
+    setIsNotificationsOpen(false);
+    setIsHelpOpen(false);
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -86,71 +127,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         window.setTimeout(() => document.getElementById('global-search-input')?.focus(), 0);
       }
       if (event.key === 'Escape') {
+        closePopovers();
         setIsSearchOpen(false);
-        setIsProfileOpen(false);
         setIsMobileMenuOpen(false);
-        setOpenMenuId(null);
       }
     };
-
     const handlePointerDown = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-      if (megaMenuRef.current && !megaMenuRef.current.contains(event.target as Node)) {
-        setOpenMenuId(null);
-      }
+      const target = event.target as Node;
+      if (!desktopPopoverRef.current?.contains(target) && !sidebarRef.current?.contains(target)) closePopovers();
     };
-
     window.addEventListener('keydown', handleKeyDown);
     document.addEventListener('mousedown', handlePointerDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handlePointerDown);
-      if (closeMenuTimerRef.current) clearTimeout(closeMenuTimerRef.current);
     };
+  });
+
+  useEffect(() => {
+    if (typeof fetch !== 'function') return;
+    let active = true;
+    fetch('/api/dashboard/summary')
+      .then((response) => response.ok ? response.json() as Promise<DashboardNotificationSummary> : null)
+      .then((summary) => { if (active && summary) setNotificationSummary(summary); })
+      .catch(() => undefined);
+    return () => { active = false; };
   }, []);
 
-  const cancelScheduledMenuClose = () => {
-    if (closeMenuTimerRef.current) clearTimeout(closeMenuTimerRef.current);
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
   };
-
-  const scheduleMenuClose = () => {
-    cancelScheduledMenuClose();
-    closeMenuTimerRef.current = setTimeout(() => setOpenMenuId(null), 140);
-  };
-
-  const openDesktopMenu = (menuId: string) => {
-    cancelScheduledMenuClose();
-    setOpenMenuId(menuId);
-  };
-
-  const handlePrimaryKeyDown = (event: React.KeyboardEvent<HTMLElement>, item: MenuItem, index: number) => {
-    const triggers = Array.from(document.querySelectorAll<HTMLElement>('[data-primary-navigation]'));
-    const focusTrigger = (targetIndex: number) => triggers[targetIndex]?.focus();
-
-    if (event.key === 'ArrowRight') {
-      event.preventDefault();
-      focusTrigger((index + 1) % triggers.length);
-    } else if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      focusTrigger((index - 1 + triggers.length) % triggers.length);
-    } else if (event.key === 'Home') {
-      event.preventDefault();
-      focusTrigger(0);
-    } else if (event.key === 'End') {
-      event.preventDefault();
-      focusTrigger(triggers.length - 1);
-    } else if (event.key === 'ArrowDown' && item.groups) {
-      event.preventDefault();
-      openDesktopMenu(item.id);
-      window.setTimeout(() => {
-        document.querySelector<HTMLElement>(`[data-mega-panel="${item.id}"] a`)?.focus();
-      }, 0);
-    }
-  };
-
-  const openMenu = menu.find((item) => item.id === openMenuId && item.groups);
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -161,392 +168,184 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setIsMobileMenuOpen(false);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
-  };
-
   return (
-    <div
-      className={`min-h-screen text-[var(--color-text-main)] ${
-        isDashboard
-          ? 'bg-[radial-gradient(circle_at_8%_3%,rgba(186,220,255,0.70)_0%,rgba(238,247,255,0.62)_28%,rgba(255,255,255,0.96)_66%),linear-gradient(135deg,#eaf4ff_0%,#ffffff_48%,#edf7ff_100%)]'
-          : 'bg-[var(--color-core-50)]'
-      }`}
-    >
-      <header className="sticky top-0 z-40 bg-transparent px-3 pb-3 pt-9 sm:px-5 lg:px-8">
-        <nav
-          aria-label="Navigasi utama"
-          className="relative mx-auto flex h-[68px] w-full max-w-[1680px] items-center gap-3 rounded-full border border-white/90 bg-white/90 px-3.5 shadow-[0_10px_35px_rgba(37,61,93,0.07)] backdrop-blur-xl sm:px-5"
-        >
-          <Link
-            href="/dashboard"
-            aria-label="SIGMA dashboard"
-            className="group flex shrink-0 items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff]"
-          >
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#eaf2ff] text-[#0a65ff] transition-transform group-hover:-translate-y-0.5">
-              <Boxes className="h-[19px] w-[19px]" strokeWidth={2.35} />
-            </span>
-            <span className="hidden leading-none sm:block">
-              <span className="block text-[17px] font-extrabold tracking-[-0.035em] text-[#14213a]">
-                SIGMA
-              </span>
-              <span className="mt-1 block text-[8px] font-bold uppercase tracking-[0.15em] text-[#9aa6b6]">
-                Health Supply
-              </span>
-            </span>
-          </Link>
-
-          <div
-            ref={megaMenuRef}
-            className="absolute left-1/2 hidden max-w-[1080px] -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#e8ebf0] bg-[#f6f7f9] p-1 min-[1320px]:flex"
-            onMouseEnter={cancelScheduledMenuClose}
-            onMouseLeave={scheduleMenuClose}
-          >
-            {menu.map((item, index) => {
-              const isActive = isMenuActive(pathname, item);
-              const hasChildren = Boolean(item.groups?.length);
-              const commonClassName = `relative flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[10px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b8ec6] min-[1450px]:px-4 min-[1450px]:text-[11px] min-[1600px]:px-[18px] min-[1600px]:text-xs ${
-                isActive
-                  ? 'bg-[#0a65ff] text-white shadow-[0_6px_14px_rgba(10,101,255,0.22)]'
-                  : openMenuId === item.id
-                    ? 'bg-white text-[#174f94] shadow-sm'
-                    : 'text-[#687386] hover:bg-white hover:text-[#18243a]'
-              }`;
-
-              if (!hasChildren && item.href) {
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    data-primary-navigation
-                    aria-current={isActive ? 'page' : undefined}
-                    onFocus={() => setOpenMenuId(null)}
-                    onKeyDown={(event) => handlePrimaryKeyDown(event, item, index)}
-                    className={commonClassName}
-                  >
-                    {item.label}
-                    {isActive && <span className="sr-only">, halaman aktif</span>}
-                  </Link>
-                );
-              }
-
+    <div className="flex min-h-screen bg-[#f8faf9] text-[#1b2a24]">
+      <aside ref={sidebarRef} className="sticky top-0 z-50 hidden h-screen w-20 shrink-0 flex-col items-center justify-between border-r border-[#e5eae7] bg-white py-6 shadow-[1px_0_4px_rgba(27,42,36,0.03)] min-[1180px]:flex" aria-label="Navigasi pintas">
+        <div className="flex w-full flex-col items-center gap-6 px-3">
+          {quickAction ? (
+            <Link href={quickAction.href} title={quickAction.label} aria-label={quickAction.label} className="group grid h-12 w-12 place-items-center rounded-2xl bg-[#1b2a24] text-white shadow-md transition hover:bg-[#2d6a4f]">
+              <Plus className="h-6 w-6" />
+            </Link>
+          ) : (
+            <span title="Tidak ada aksi yang tersedia" className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e5eae7] text-[#9ca8a2]"><Plus className="h-6 w-6" /></span>
+          )}
+          <span className="h-px w-8 bg-[#e5eae7]" />
+          <nav className="flex w-full flex-col items-center gap-3">
+            {shortcutItems.map(({ item, href, icon: Icon, label }) => {
+              const active = item ? isMenuActive(pathname, item) : isRouteActive(pathname, href);
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  data-primary-navigation
-                  aria-expanded={openMenuId === item.id}
-                  aria-controls={`mega-menu-${item.id}`}
-                  onMouseEnter={() => openDesktopMenu(item.id)}
-                  onClick={() => setOpenMenuId((current) => current === item.id ? null : item.id)}
-                  onKeyDown={(event) => handlePrimaryKeyDown(event, item, index)}
-                  className={commonClassName}
-                >
-                  {item.label}
-                  <ChevronDown className={`h-3 w-3 transition-transform ${openMenuId === item.id ? 'rotate-180' : ''}`} strokeWidth={2} aria-hidden="true" />
-                  {isActive && <span className="sr-only">, bagian aktif</span>}
-                </button>
+                <Link key={`${label}-${href}`} href={href} title={label} aria-label={label} aria-current={active ? 'page' : undefined} className={`grid h-12 w-12 place-items-center rounded-2xl transition ${active ? 'bg-[#e8f5e9] text-[#2d6a4f] shadow-sm' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#2d6a4f]'}`}>
+                  <Icon className="h-5 w-5" />
+                </Link>
               );
             })}
+          </nav>
+        </div>
 
-            {openMenu?.groups && (
-              <div
-                id={`mega-menu-${openMenu.id}`}
-                data-mega-panel={openMenu.id}
-                className={`absolute left-1/2 top-[calc(100%+14px)] max-h-[min(70vh,560px)] -translate-x-1/2 overflow-y-auto rounded-[22px] border border-[#dfe6ee] bg-white p-3 shadow-[0_24px_60px_rgba(26,52,83,0.18)] ${
-                  openMenu.groups.length >= 3
-                    ? 'w-[min(760px,calc(100vw-40px))]'
-                    : openMenu.groups.length === 2
-                      ? 'w-[min(620px,calc(100vw-40px))]'
-                      : 'w-[min(420px,calc(100vw-40px))]'
-                }`}
-                onMouseEnter={cancelScheduledMenuClose}
-                onMouseLeave={scheduleMenuClose}
-              >
-                <div className={`grid gap-3 ${openMenu.groups.length >= 3 ? 'grid-cols-3' : openMenu.groups.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                  {openMenu.groups.map((group) => (
-                    <section key={group.id} aria-labelledby={`mega-group-${group.id}`} className="min-w-0 rounded-2xl bg-[#f8fafc] p-2.5">
-                      <h2 id={`mega-group-${group.id}`} className="px-2 pb-2 pt-1 text-[9px] font-bold uppercase tracking-[0.15em] text-[#8a98a9]">
-                        {group.label}
-                      </h2>
-                      <div className="space-y-1">
-                        {group.items.map((destination) => {
-                          const childActive = isRouteActive(pathname, destination.href);
-                          return (
-                            <Link
-                              key={destination.id}
-                              href={destination.href}
-                              aria-current={childActive ? 'page' : undefined}
-                              onClick={() => setOpenMenuId(null)}
-                              className={`group/item flex items-start gap-2.5 rounded-xl px-2.5 py-2.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b8ec6] ${
-                                childActive ? 'bg-[#eaf3ff] text-[#174f94]' : 'text-[#314258] hover:bg-white hover:shadow-sm'
-                              }`}
-                            >
-                              <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${childActive ? 'bg-[#0a65ff] ring-4 ring-[#dcecff]' : 'bg-[#bdc8d4] group-hover/item:bg-[#5b92d5]'}`} aria-hidden="true" />
-                              <span className="min-w-0">
-                                <span className="flex items-center gap-2 text-[11px] font-bold">
-                                  {destination.label}
-                                  {destination.readOnly && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-white px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#6c7e91]">
-                                      <Eye className="h-2.5 w-2.5" aria-hidden="true" /> View
-                                    </span>
-                                  )}
-                                </span>
-                                {destination.description && (
-                                  <span className="mt-1 block text-[9px] font-medium leading-4 text-[#8291a2]">{destination.description}</span>
-                                )}
-                              </span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              aria-label="Buka pencarian"
-              aria-expanded={isSearchOpen}
-              onClick={() => {
-                setIsSearchOpen((open) => !open);
-                window.setTimeout(() => document.getElementById('global-search-input')?.focus(), 0);
-              }}
-              className="relative grid h-10 w-10 place-items-center rounded-full bg-[#f5f6f8] text-[#354156] transition hover:bg-[#eaf2ff] hover:text-[#0a65ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff]"
-            >
-              <Search className="h-4 w-4" strokeWidth={1.9} />
-              <span className="sr-only">Shortcut Ctrl K</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Notifikasi"
-              title="Notifikasi"
-              className="relative grid h-10 w-10 place-items-center rounded-full bg-[#f5f6f8] text-[#354156] transition hover:bg-[#eaf2ff] hover:text-[#0a65ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff]"
-            >
-              <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
-              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#ff6760] ring-2 ring-[#f5f6f8]" />
-            </button>
-
-            <div className="mx-0.5 hidden h-6 w-px bg-[#e5e8ed] sm:block" />
-
-            <div ref={profileRef} className="relative">
-              <button
-                type="button"
-                aria-label="Buka menu pengguna"
-                aria-expanded={isProfileOpen}
-                onClick={() => setIsProfileOpen((open) => !open)}
-                className="group grid h-10 w-10 place-items-center rounded-full transition hover:bg-[#f5f7fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a65ff]"
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#2158a8,#173768)] text-[10px] font-bold text-white ring-2 ring-[#e9eef5] transition group-hover:ring-[#bcd4ff]">
-                  {getInitials(user?.name)}
-                </span>
-              </button>
-
-              {isProfileOpen && (
-                <div className="absolute right-0 top-[calc(100%+14px)] w-64 overflow-hidden rounded-[22px] border border-[#e5eaf1] bg-white p-2 shadow-[0_20px_55px_rgba(37,61,93,0.16)]">
-                  <div className="rounded-2xl bg-[#f6f8fb] px-3 py-3">
-                    <p className="truncate text-xs font-bold text-[var(--color-brand)]">{user?.name}</p>
-                    <div className="mt-2 flex items-center justify-between gap-3 text-[10px]">
-                      <span className="rounded-full bg-[var(--color-accent-light)] px-2 py-1 font-bold text-[var(--color-accent-hover)]">
-                        {role || 'VIEWER'}
-                      </span>
-                    </div>
-                  </div>
-                  {role === 'ADMIN' && (
-                    <Link
-                      href="/config/users"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold text-[#43566d] transition hover:bg-[#eef4fb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b8ec6]"
-                    >
-                      <Settings2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                      Pengaturan teknis
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold text-[#a1433d] transition hover:bg-[#fff1ef] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e25b52]"
-                  >
-                    <LogOut className="h-4 w-4" strokeWidth={1.8} />
-                    Keluar
-                  </button>
-                </div>
-              )}
+        <div className="relative flex w-full flex-col items-center gap-4 px-3">
+          <button type="button" aria-label="Bantuan" aria-expanded={isHelpOpen} onClick={() => { closePopovers(); setIsHelpOpen((open) => !open); }} className="grid h-12 w-12 place-items-center rounded-2xl text-[#9ca8a2] transition hover:bg-[#f1f5f3] hover:text-[#1b2a24]"><CircleHelp className="h-5 w-5" /></button>
+          {isHelpOpen && (
+            <div className="absolute bottom-16 left-[calc(100%+8px)] w-64 rounded-2xl border border-[#e5eae7] bg-white p-4 shadow-[0_12px_32px_-4px_rgba(27,42,36,0.14)]">
+              <p className="text-xs font-bold text-[#1b2a24]">Bantuan SIGMA</p>
+              <p className="mt-1 text-[10px] leading-4 text-[#6b7c74]">Gunakan menu di atas untuk berpindah modul. Tekan Ctrl/Cmd + K untuk mencari produk.</p>
             </div>
+          )}
+          <button type="button" onClick={() => void handleLogout()} aria-label="Keluar" className="grid h-12 w-12 place-items-center rounded-2xl text-[#ef4444] transition hover:bg-[#fef2f2]"><LogOut className="h-5 w-5" /></button>
+        </div>
+      </aside>
 
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen((open) => !open)}
-              aria-label={isMobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
-              aria-expanded={isMobileMenuOpen}
-              className="grid h-10 w-10 place-items-center rounded-full bg-[#f5f6f8] text-[#354156] transition hover:bg-[#eaf2ff] hover:text-[#0a65ff] min-[1320px]:hidden"
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </nav>
-
-        {isMobileMenuOpen && (
-          <div className="mx-auto mt-2 max-w-[1680px] rounded-[28px] border border-white/90 bg-white/95 px-4 pb-5 pt-4 shadow-[0_18px_45px_rgba(37,61,93,0.10)] min-[1320px]:hidden">
-            <div className="space-y-2">
+      <div className="min-w-0 flex-1">
+        <header className="sticky top-0 z-40 border-b border-[#e5eae7] bg-white/95 backdrop-blur-md">
+          <div ref={desktopPopoverRef} className="relative mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-8">
+            <Link href="/dashboard" className="font-display text-base font-extrabold text-[#1b2a24] min-[1180px]:hidden">SIGMA</Link>
+            <nav aria-label="Navigasi utama" className="hidden items-center gap-1 min-[1180px]:flex">
               {menu.map((item) => {
-                const isActive = isMenuActive(pathname, item);
                 const Icon = NAV_ICONS[item.id] || LayoutDashboard;
-                const isExpanded = openMobileSectionId === item.id;
+                const active = isMenuActive(pathname, item);
+                const hasChildren = Boolean(item.groups?.length);
+                const triggerClass = `flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d6a4f] ${active || openMenuId === item.id ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#1b2a24]'}`;
 
-                if (item.href) {
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      aria-current={isActive ? 'page' : undefined}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-2.5 rounded-xl px-3 py-3 text-xs font-semibold transition ${
-                        isActive
-                          ? 'bg-[#eaf3ff] text-[#17579f]'
-                          : 'border border-[#e5ebf2] text-[#64768b] hover:bg-[#f7f9fc]'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  );
+                if (!hasChildren && item.href) {
+                  return <Link key={item.id} href={item.href} aria-current={active ? 'page' : undefined} className={triggerClass}><Icon className="h-3.5 w-3.5" />{item.label}</Link>;
                 }
 
                 return (
-                  <section key={item.id} className="overflow-hidden rounded-2xl border border-[#e5ebf2] bg-white">
-                    <button
-                      type="button"
-                      aria-expanded={isExpanded}
-                      aria-controls={`mobile-menu-${item.id}`}
-                      onClick={() => setOpenMobileSectionId((current) => current === item.id ? null : item.id)}
-                      className={`flex w-full items-center gap-2.5 px-3 py-3 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0b8ec6] ${
-                        isActive ? 'bg-[#eaf3ff] text-[#17579f]' : 'text-[#64768b] hover:bg-[#f7f9fc]'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                      <span className="flex-1 truncate">{item.label}</span>
-                      <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
+                  <div key={item.id} className="relative">
+                    <button type="button" aria-expanded={openMenuId === item.id} aria-controls={`nav-popover-${item.id}`} onClick={() => { setIsProfileOpen(false); setIsNotificationsOpen(false); setOpenMenuId((current) => current === item.id ? null : item.id); }} className={triggerClass}>
+                      <Icon className="h-3.5 w-3.5" />{item.label}<ChevronDown className={`h-3 w-3 opacity-60 transition-transform ${openMenuId === item.id ? 'rotate-180' : ''}`} />
                     </button>
-
-                    {isExpanded && item.groups && (
-                      <div id={`mobile-menu-${item.id}`} className="border-t border-[#e8edf3] bg-[#f9fbfd] px-3 pb-3 pt-2">
-                        {item.groups.map((group) => (
-                          <div key={group.id} className="mt-2 first:mt-0">
-                            <p className="px-2 py-1.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#94a1b0]">{group.label}</p>
-                            <div className="space-y-1">
+                    {openMenuId === item.id && item.groups && (
+                      <div id={`nav-popover-${item.id}`} className="absolute left-0 top-full mt-2 w-72 overflow-hidden rounded-2xl border border-[#e5eae7] bg-white p-3 shadow-[0_12px_32px_-4px_rgba(27,42,36,0.14),0_4px_10px_-2px_rgba(27,42,36,0.06)]">
+                        {item.groups.map((group, groupIndex) => (
+                          <section key={group.id} className={`${groupIndex > 0 ? 'mt-2.5 border-t border-[#edf1ee] pt-2.5' : ''}`} aria-labelledby={`popover-group-${group.id}`}>
+                            <h2 id={`popover-group-${group.id}`} className="flex items-center gap-1.5 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[#9ca8a2]"><Folder className="h-3 w-3 text-[#2d6a4f]" />/{group.label}</h2>
+                            <div className="mt-1 space-y-0.5">
                               {group.items.map((destination) => (
-                                <Link
-                                  key={destination.id}
-                                  href={destination.href}
-                                  onClick={() => {
-                                    setIsMobileMenuOpen(false);
-                                    setOpenMobileSectionId(null);
-                                  }}
-                                  className={`flex items-center gap-2 rounded-xl px-2.5 py-2.5 text-[11px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b8ec6] ${
-                                    isRouteActive(pathname, destination.href)
-                                      ? 'bg-white text-[#17579f] shadow-sm'
-                                      : 'text-[#5f7186] hover:bg-white'
-                                  }`}
-                                >
-                                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#91a1b3]" aria-hidden="true" />
-                                  <span className="flex-1">{destination.label}</span>
-                                  {destination.readOnly && <Eye className="h-3.5 w-3.5 text-[#7c8ea1]" aria-label="Hanya lihat" />}
+                                <Link key={destination.id} href={destination.href} onClick={() => setOpenMenuId(null)} className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-[11px] font-semibold transition ${isRouteActive(pathname, destination.href) ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#31483c] hover:bg-[#f1f5f3] hover:text-[#2d6a4f]'}`}>
+                                  <span className="truncate">{destination.label}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
                                 </Link>
                               ))}
                             </div>
-                          </div>
+                          </section>
                         ))}
                       </div>
                     )}
-                  </section>
+                  </div>
                 );
               })}
-            </div>
+            </nav>
 
-            <div className="mt-4 flex items-center justify-between rounded-xl bg-[var(--color-core-50)] p-3">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--color-brand)] text-[10px] font-bold text-white">
-                  {getInitials(user?.name)}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-bold text-[var(--color-brand)]">{user?.name}</p>
-                  <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--color-text-placeholder)]">
-                    {role || 'VIEWER'}
-                  </p>
-                </div>
-              </div>
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                onClick={handleLogout}
-                aria-label="Keluar"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#a1433d] hover:bg-[#fff1ef]"
+                aria-label="Buka pencarian global"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  setIsNotificationsOpen(false);
+                  setIsProfileOpen(false);
+                  setIsSearchOpen(true);
+                }}
+                className="flex h-9 items-center gap-2 rounded-full border border-[#e5eae7] bg-white px-2.5 text-[#6b7c74] shadow-[0_1px_3px_rgba(27,42,36,0.04)] transition hover:border-[#cfd8d3] hover:bg-[#f8faf9] hover:text-[#1b2a24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d6a4f] sm:px-3"
               >
-                <LogOut className="h-4 w-4" />
+                <Search className="h-4 w-4" />
+                <span className="hidden text-[10px] font-semibold sm:inline">Cari</span>
+                <kbd className="hidden rounded-md border border-[#e5eae7] bg-[#f3f6f4] px-1.5 py-0.5 text-[8px] font-bold text-[#9ca8a2] sm:inline">Ctrl K</kbd>
+              </button>
+
+              <div className="relative">
+                <button type="button" aria-label="Notifikasi" aria-expanded={isNotificationsOpen} onClick={() => { setOpenMenuId(null); setIsProfileOpen(false); setIsNotificationsOpen((open) => !open); }} className={`relative grid h-9 w-9 place-items-center rounded-full transition ${isNotificationsOpen ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#1b2a24]'}`}>
+                  <Bell className="h-[18px] w-[18px]" /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#ef5350] ring-2 ring-white" />
+                </button>
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-[#e5eae7] bg-white p-3 shadow-[0_12px_32px_-4px_rgba(27,42,36,0.14)]">
+                    <div className="flex items-center justify-between px-2 py-1"><strong className="text-xs text-[#1b2a24]">Notifikasi Operasional</strong><Link href="/inventory" onClick={() => setIsNotificationsOpen(false)} className="text-[9px] font-bold text-[#2d6a4f]">Lihat semua</Link></div>
+                    <div className="mt-2 divide-y divide-[#edf1ee]">
+                      <Link href="/inventory?status=OUT_OF_STOCK" onClick={() => setIsNotificationsOpen(false)} className="flex gap-3 rounded-lg px-2 py-3 hover:bg-[#f8faf9]"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ef6f68]" /><span><strong className="block text-[10px] text-[#1b2a24]">{notificationSummary?.stockoutCount ?? '—'} SKU stok habis</strong><small className="text-[9px] text-[#6b7c74]">Butuh tindak lanjut segera</small></span></Link>
+                      <Link href="/inventory?status=LOW_STOCK" onClick={() => setIsNotificationsOpen(false)} className="flex gap-3 rounded-lg px-2 py-3 hover:bg-[#f8faf9]"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#e6a84d]" /><span><strong className="block text-[10px] text-[#1b2a24]">{notificationSummary?.lowStockCount ?? '—'} SKU stok menipis</strong><small className="text-[9px] text-[#6b7c74]">Periksa rekomendasi reorder</small></span></Link>
+                      <Link href="/requisitions?status=SUBMITTED" onClick={() => setIsNotificationsOpen(false)} className="flex gap-3 rounded-lg px-2 py-3 hover:bg-[#f8faf9]"><span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#7caee8]" /><span><strong className="block text-[10px] text-[#1b2a24]">{notificationSummary?.pendingRequisitionsCount ?? '—'} permintaan menunggu</strong><small className="text-[9px] text-[#6b7c74]">Review dan setujui permintaan</small></span></Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <span className="hidden h-6 w-px bg-[#e5eae7] sm:block" />
+              <div className="relative">
+                <button type="button" aria-label="Buka menu pengguna" aria-expanded={isProfileOpen} onClick={() => { setOpenMenuId(null); setIsNotificationsOpen(false); setIsProfileOpen((open) => !open); }} className={`flex items-center gap-2.5 rounded-full p-1 transition ${isProfileOpen ? 'bg-[#f1f5f3]' : 'hover:bg-[#f1f5f3]'}`}>
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[linear-gradient(145deg,#4f8c70,#22543d)] text-[9px] font-bold text-white ring-2 ring-[#e5eae7]">{getInitials(user?.name)}</span>
+                  <span className="hidden text-left min-[1320px]:block"><strong className="flex items-center gap-1 text-[10px] text-[#1b2a24]">{user?.name}<ChevronDown className="h-3 w-3 text-[#9ca8a2]" /></strong><small className="block text-[9px] text-[#9ca8a2]">{user?.id}</small></span>
+                </button>
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-[#e5eae7] bg-white p-3 shadow-[0_12px_32px_-4px_rgba(27,42,36,0.14)]">
+                    <div className="flex items-center gap-3 rounded-xl bg-[#f8faf9] p-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-[#2d6a4f] text-[10px] font-bold text-white">{getInitials(user?.name)}</span><span className="min-w-0"><strong className="block truncate text-xs text-[#1b2a24]">{user?.name}</strong><small className="text-[9px] font-bold text-[#2d6a4f]">{role || 'VIEWER'} • {user?.id}</small></span></div>
+                    {role === 'ADMIN' && <Link href="/config/users" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[11px] font-semibold text-[#43584c] hover:bg-[#f1f5f3]"><Settings2 className="h-4 w-4" />Pengaturan teknis</Link>}
+                    <button type="button" onClick={() => void handleLogout()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[11px] font-semibold text-[#b84d48] hover:bg-[#fff1ef]"><LogOut className="h-4 w-4" />Keluar</button>
+                  </div>
+                )}
+              </div>
+
+              <button type="button" aria-label={isMobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'} aria-expanded={isMobileMenuOpen} onClick={() => setIsMobileMenuOpen((open) => !open)} className="grid h-9 w-9 place-items-center rounded-full text-[#43584c] hover:bg-[#e8f5e9] min-[1180px]:hidden">
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>
           </div>
+        </header>
+
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 bg-[#1b2a24]/35 backdrop-blur-[2px] min-[1180px]:hidden" onMouseDown={() => setIsMobileMenuOpen(false)}>
+            <aside className="flex h-full w-[min(320px,88vw)] flex-col bg-white p-5 shadow-[18px_0_48px_rgba(27,42,36,0.18)]" onMouseDown={(event) => event.stopPropagation()} aria-label="Menu mobile">
+              <div className="flex items-center justify-between"><Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="font-display text-xl font-extrabold text-[#1b2a24]">SIGMA</Link><button type="button" aria-label="Tutup menu navigasi" onClick={() => setIsMobileMenuOpen(false)} className="grid h-9 w-9 place-items-center rounded-full bg-[#f1f5f3] text-[#43584c]"><X className="h-5 w-5" /></button></div>
+              {quickAction && <Link href={quickAction.href} onClick={() => setIsMobileMenuOpen(false)} className="mt-5 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2d6a4f] text-xs font-bold text-white"><Plus className="h-4 w-4" />{quickAction.label}</Link>}
+              <nav className="mt-5 flex-1 space-y-2 overflow-y-auto">
+                {menu.map((item) => {
+                  const Icon = NAV_ICONS[item.id] || LayoutDashboard;
+                  const active = isMenuActive(pathname, item);
+                  if (item.href) {
+                    return <Link key={item.id} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-xs font-bold ${active ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#52655a] hover:bg-[#f1f5f3]'}`}><Icon className="h-4 w-4" />{item.label}</Link>;
+                  }
+                  const expanded = openMobileSectionId === item.id;
+                  return (
+                    <section key={item.id} className="overflow-hidden rounded-xl border border-[#e5eae7]">
+                      <button type="button" aria-expanded={expanded} onClick={() => setOpenMobileSectionId((current) => current === item.id ? null : item.id)} className={`flex w-full items-center gap-3 px-3 py-3 text-left text-xs font-bold ${active ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#52655a]'}`}><Icon className="h-4 w-4" /><span className="flex-1">{item.label}</span><ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} /></button>
+                      {expanded && <div className="border-t border-[#e5eae7] bg-[#f8faf9] p-2">{item.groups?.flatMap((group) => group.items).map((destination) => <Link key={destination.id} href={destination.href} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[11px] font-semibold text-[#52655a] hover:bg-white hover:text-[#2d6a4f]"><ChevronRight className="h-3.5 w-3.5" />{destination.label}</Link>)}</div>}
+                    </section>
+                  );
+                })}
+              </nav>
+              <div className="mt-4 border-t border-[#e5eae7] pt-4">
+                <div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#2d6a4f] text-[9px] font-bold text-white">{getInitials(user?.name)}</span><span className="min-w-0 flex-1"><strong className="block truncate text-xs text-[#1b2a24]">{user?.name}</strong><small className="text-[9px] text-[#6b7c74]">{role}</small></span><button type="button" aria-label="Keluar" onClick={() => void handleLogout()} className="grid h-9 w-9 place-items-center rounded-lg text-[#ef5350] hover:bg-[#fff1ef]"><LogOut className="h-4 w-4" /></button></div>
+              </div>
+            </aside>
+          </div>
         )}
-      </header>
+
+        <main className="mx-auto min-h-[calc(100vh-64px)] w-full max-w-[1400px] px-4 py-6 sm:px-8">
+          {children}
+        </main>
+      </div>
 
       {isSearchOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-[#1a2638]/40 px-4 pt-[12vh] backdrop-blur-[2px]"
-          onMouseDown={() => setIsSearchOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="global-search-title"
-            className="w-full max-w-xl rounded-[28px] border border-white/80 bg-white p-4 shadow-[0_28px_80px_rgba(20,36,58,0.24)] sm:p-5"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-[70] flex items-start justify-center bg-[#1b2a24]/40 px-4 pt-[12vh] backdrop-blur-[2px]" onMouseDown={() => setIsSearchOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="global-search-title" className="w-full max-w-xl rounded-[24px] border border-white/80 bg-white p-5 shadow-[0_28px_80px_rgba(27,42,36,0.24)]" onMouseDown={(event) => event.stopPropagation()}>
             <h2 id="global-search-title" className="sr-only">Pencarian global</h2>
             <form onSubmit={handleSearchSubmit} className="relative" role="search">
-              <Search
-                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#8a96a8]"
-                strokeWidth={1.8}
-              />
-              <input
-                id="global-search-input"
-                autoFocus
-                type="search"
-                placeholder="Cari produk, SKU, atau menu..."
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="h-12 w-full rounded-full border border-[#dfe5ed] bg-[#f8fafc] pl-12 pr-12 text-xs font-medium text-[#1b2940] outline-none transition placeholder:text-[#9aa5b5] focus:border-[#9bc2ff] focus:bg-white focus:ring-4 focus:ring-[#eaf2ff] sm:h-14 sm:text-sm"
-              />
-              <button
-                type="button"
-                aria-label="Tutup pencarian"
-                onClick={() => setIsSearchOpen(false)}
-                className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[#98a3b2] transition hover:bg-[#edf2f7] hover:text-[#344156]"
-              >
-                <X className="h-4 w-4" strokeWidth={1.8} />
-              </button>
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9ca8a2]" />
+              <input id="global-search-input" autoFocus type="search" placeholder="Cari produk, SKU, atau menu..." value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-13 w-full rounded-full border border-[#cfd8d3] bg-[#f8faf9] pl-12 pr-12 text-xs font-medium text-[#1b2a24] outline-none transition placeholder:text-[#9ca8a2] focus:border-[#52b788] focus:bg-white focus:ring-4 focus:ring-[#e8f5e9] sm:text-sm" />
+              <button type="button" aria-label="Tutup pencarian" onClick={() => setIsSearchOpen(false)} className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[#9ca8a2] hover:bg-[#f1f5f3] hover:text-[#1b2a24]"><X className="h-4 w-4" /></button>
             </form>
-            <p className="px-3 pt-3 text-[10px] font-medium text-[#929eae] sm:text-[11px]">
-              Tekan ESC atau klik area luar untuk menutup
-            </p>
+            <p className="px-3 pt-3 text-[10px] text-[#9ca8a2]">Tekan ESC atau klik area luar untuk menutup</p>
           </div>
         </div>
       )}
-
-      <main className="mx-auto min-h-[calc(100vh-115px)] w-full max-w-[1728px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        {children}
-      </main>
-
-      <footer className={`border-t border-[var(--color-core-100)] py-4 ${isDashboard ? 'bg-white/70 backdrop-blur-xl' : 'bg-white'}`}>
-        <div className="mx-auto max-w-[1728px] px-4 text-center text-[10px] font-medium text-[var(--color-text-placeholder)]">
-          SIGMA Health Supply &copy; {new Date().getFullYear()} · Healthcare Supply Chain System
-        </div>
-      </footer>
     </div>
   );
 }

@@ -56,8 +56,7 @@ test('login as manager navigates to a rendering dashboard', async ({ page }) => 
   // Dashboard heading + KPI stat cards render (proves client data fetch succeeded).
   await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText('Total Produk')).toBeVisible();
-  // The KPI StatCard label is a direct match ("Fill Rate", exact cell in the grid).
-  await expect(page.getByText('Fill Rate', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Fulfillment Progress Overview' })).toBeVisible();
 
   // KPI values render (summary data loaded from the API) — KPI StatCard cell.
   await expect(page.getByText('Stok Habis', { exact: true }).first()).toBeVisible();

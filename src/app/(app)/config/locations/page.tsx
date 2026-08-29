@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function LocationsPage() {
   return (
-    <div className="p-6">
+    <div className="w-full">
       <ToastProvider>
         <LocationsConfig />
       </ToastProvider>

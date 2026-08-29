@@ -14,7 +14,7 @@ export default async function RequisitionDetailPage({
 }) {
   const { id } = await params;
   return (
-    <div className="p-6">
+    <div className="w-full">
       <ToastProvider>
         <RequisitionDetail id={id} />
       </ToastProvider>

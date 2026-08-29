@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function NewTransferPage() {
   return (
-    <div className="p-6">
+    <div className="w-full">
       <ToastProvider>
         <TransferNew />
       </ToastProvider>

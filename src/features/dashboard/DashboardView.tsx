@@ -3,55 +3,14 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  CheckCircle2,
-  MoreHorizontal,
-  Plus,
-  Share2,
-  Sparkles,
-} from 'lucide-react';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from 'recharts';
-import { Card, Skeleton, ErrorState } from '@/shared/ui';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, MoreHorizontal, PackageOpen, Plus, Share2, WalletCards } from 'lucide-react';
+import { ErrorState, Skeleton } from '@/shared/ui';
 import { getDashboardSummary, getDashboardTrend } from './api';
-import type { DashboardSummary, DashboardTrendData } from './api';
-
-const CHART_COLORS = {
-  navy: '#173b66',
-  blue: '#4a8ff0',
-  sky: '#8bc5ff',
-  cyan: '#62c7d7',
-  violet: '#9d83eb',
-  green: '#39a878',
-  amber: '#eba94d',
-  red: '#e66f69',
-  grid: '#e7eef8',
-  muted: '#8291a8',
-};
+import type { DashboardSummary, DashboardTrendData, OperationalSchedule, RecentActivity, WeeklyFulfillmentPoint } from './api';
 
 const numberFormatter = new Intl.NumberFormat('id-ID');
-
-const tooltipStyle = {
-  backgroundColor: 'rgba(255, 255, 255, 0.96)',
-  border: '1px solid #dfe9f6',
-  borderRadius: '14px',
-  boxShadow: '0 14px 34px rgba(35, 72, 118, 0.12)',
-  color: '#173b66',
-  fontSize: '11px',
-};
+const dateFormatter = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+const PANEL_CLASS = 'rounded-[20px] border border-[#e5eae7] bg-white shadow-[0_2px_8px_rgba(27,42,36,0.04)]';
 
 interface MetricCardProps {
   title: string;
@@ -65,80 +24,180 @@ interface MetricCardProps {
 function MetricVisual({ variant }: { variant: MetricCardProps['visual'] }) {
   if (variant === 'pulse') {
     return (
-      <svg className="h-10 w-24 shrink-0 text-[#4a8ff0]" viewBox="0 0 100 40" fill="none" aria-hidden="true">
+      <svg className="h-10 w-24 shrink-0 text-[#52b788]" viewBox="0 0 100 40" fill="none" aria-hidden="true">
         <path d="M1 22h19l6-14 6 27 7-19 7 10 8-4h12l6-10 7 20 7-10h13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
-
   if (variant === 'curve') {
     return (
-      <svg className="h-10 w-24 shrink-0 text-[#4a8ff0]" viewBox="0 0 100 40" fill="none" aria-hidden="true">
+      <svg className="h-10 w-24 shrink-0 text-[#52b788]" viewBox="0 0 100 40" fill="none" aria-hidden="true">
         <path d="M1 27c18 0 25-11 43-11 20 0 29 14 55 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-        <path d="M1 33h98" stroke="#e4eefb" strokeWidth="1" strokeDasharray="3 4" />
       </svg>
     );
   }
-
-  const barHeights = variant === 'bars' ? [16, 29, 21, 34, 25, 38, 27] : [35, 32, 29, 25, 21, 18, 15];
+  const heights = variant === 'bars' ? [16, 29, 21, 34, 25, 38, 27] : [36, 34, 31, 27, 23, 19, 16];
   return (
     <div className="flex h-10 w-24 shrink-0 items-end gap-1.5" aria-hidden="true">
-      {barHeights.map((height, index) => (
-        <span
-          key={`${variant}-${index}`}
-          className={`w-1.5 rounded-t-full ${index < 4 ? 'bg-[#4a8ff0]' : 'bg-[#a8ccfb]'}`}
-          style={{ height }}
-        />
+      {heights.map((height, index) => (
+        <span key={`${variant}-${index}`} className={`w-1.5 rounded-t-sm ${index < 4 ? 'bg-[#52b788]' : 'bg-[#b7d8ff]'}`} style={{ height }} />
       ))}
     </div>
   );
 }
 
 function MetricCard({ title, value, unit, detail, href, visual }: MetricCardProps) {
-
   return (
-    <article className="group flex min-h-[180px] flex-col justify-between rounded-[20px] border border-[#dfe7f0] bg-white/92 p-5 shadow-[0_3px_12px_rgba(35,72,118,0.04)] backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-[#cfdef0] hover:shadow-[0_10px_26px_rgba(35,72,118,0.08)]">
-      <div>
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#62768e]">{title}</p>
-          <Link
-            href={href}
-            aria-label={`Lihat detail ${title}`}
-            className="grid h-7 w-7 place-items-center rounded-full text-[#9ba9b8] transition hover:bg-[#edf4fd] hover:text-[#397fdc]"
-          >
-            <MoreHorizontal className="h-4 w-4" strokeWidth={2} />
-          </Link>
-        </div>
-        <div className="mt-2 flex items-baseline gap-1.5">
-          <span className="text-[30px] font-bold leading-none tracking-[-0.045em] text-[#142f52] tabular-nums sm:text-[32px]">{value}</span>
-          <span className="text-[10px] font-semibold text-[#70839a]">{unit}</span>
-        </div>
+    <article className={`${PANEL_CLASS} group flex min-h-[146px] flex-col justify-between p-5 transition-shadow hover:shadow-[0_4px_14px_rgba(27,42,36,0.07)]`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#6b7c74]">{title}</p>
+        <Link href={href} aria-label={`Lihat detail ${title}`} className="grid h-6 w-6 place-items-center rounded-full text-[#9ca8a2] transition hover:bg-[#f1f5f3] hover:text-[#2d6a4f]"><MoreHorizontal className="h-4 w-4" /></Link>
       </div>
-
-      <div className="mt-4 flex items-center gap-3">
-        <MetricVisual variant={visual} />
-        <p className="text-[10px] leading-[1.45] text-[#708198] sm:text-[11px]">{detail}</p>
+      <div className="mt-1.5 flex items-baseline gap-1.5">
+        <span className="text-[30px] font-bold leading-none tracking-[-0.045em] text-[#1b2a24] tabular-nums">{value}</span>
+        <span className="text-[10px] font-semibold text-[#6b7c74]">{unit}</span>
       </div>
+      <div className="mt-3 flex items-center gap-3"><MetricVisual variant={visual} /><p className="text-[10px] leading-[1.4] text-[#6b7c74] sm:text-[11px]">{detail}</p></div>
     </article>
   );
+}
+
+function FulfillmentChart({ data }: { data: WeeklyFulfillmentPoint[] }) {
+  const chartMax = 150;
+  const stages = [
+    { key: 'requested' as const, color: '#b7e4c7', label: 'Diminta' },
+    { key: 'approved' as const, color: '#95d5b2', label: 'Disetujui' },
+    { key: 'issued' as const, color: '#52b788', label: 'Dikeluarkan' },
+    { key: 'received' as const, color: '#a0c4ff', label: 'Diterima' },
+  ];
+
+  return (
+    <div className={`${PANEL_CLASS} flex min-h-[414px] flex-col justify-between p-6 lg:col-span-8 lg:h-[438px] lg:min-h-0`}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="font-display text-lg font-bold text-[#1b2a24]">Fulfillment Progress Overview</h2>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3 text-[10px] sm:text-xs">
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#6b7c74]"><span className="h-2.5 w-2.5 rounded-sm bg-[#52b788]" />Progress</span>
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#6b7c74]"><span className="h-2.5 w-2.5 rounded-sm bg-[#a0c4ff]" />Received</span>
+          </div>
+          <button type="button" className="inline-flex items-center gap-1 rounded-full border border-[#e5eae7] bg-[#f3f6f4] px-3 py-1.5 text-[10px] font-semibold text-[#1b2a24] hover:bg-[#f1f5f3] sm:text-xs">
+            7 Hari Terakhir <ChevronDown className="h-3.5 w-3.5 text-[#6b7c74]" />
+          </button>
+        </div>
+      </div>
+
+      <div className="relative mt-8 h-[272px] pl-8 sm:pl-10">
+        <div className="absolute inset-y-0 left-0 right-0 flex flex-col justify-between pb-7 text-[10px] text-[#9ca8a2]">
+          {[150, 100, 50, 0].map((tick) => (
+            <div key={tick} className="flex items-end gap-2"><span className="w-7 translate-y-1 text-right">{tick}</span><span className="h-px flex-1 bg-[#e5eae7]" /></div>
+          ))}
+        </div>
+        <div className="absolute inset-x-2 bottom-7 top-0 flex items-end justify-between gap-1 sm:inset-x-6 sm:gap-2">
+          {data.map((point) => (
+            <div key={point.day} className="flex h-full flex-1 items-end justify-center gap-0.5 sm:gap-1" aria-label={`Fulfillment ${point.day}`}>
+              {stages.map((stage) => (
+                <span
+                  key={stage.key}
+                  title={`${stage.label}: ${point[stage.key]}`}
+                  className="w-1.5 rounded-t-sm transition-opacity hover:opacity-75 sm:w-2"
+                  style={{ height: `${Math.min((point[stage.key] / chartMax) * 100, 100)}%`, backgroundColor: stage.color }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-x-2 bottom-0 flex justify-between sm:inset-x-6">
+          {data.map((point) => <span key={point.day} className="flex-1 text-center text-[10px] font-bold tracking-wide text-[#9ca8a2]">{point.day}</span>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function dateKey(year: number, monthIndex: number, day: number) {
+  return `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function OperationalCalendar({ schedule }: { schedule: OperationalSchedule }) {
+  const [initialYear, initialMonth] = schedule.month.split('-').map(Number);
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date(initialYear, initialMonth - 1, 1));
+  const year = visibleMonth.getFullYear();
+  const monthIndex = visibleMonth.getMonth();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const leadingDays = new Date(year, monthIndex, 1).getDay();
+  const monthLabel = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(visibleMonth);
+  const cells = [
+    ...Array.from({ length: leadingDays }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+  ];
+  const compactCalendar = cells.length > 35;
+
+  const changeMonth = (offset: number) => {
+    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  };
+
+  return (
+    <aside className={`${PANEL_CLASS} flex min-h-[414px] flex-col justify-between p-6 lg:col-span-4 lg:h-[438px] lg:min-h-0`} aria-label="Agenda operasional">
+      <div>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-display text-lg font-bold text-[#1b2a24]">Agenda Operasional</h2>
+          <Link href="/requisitions" className="text-[10px] font-bold text-[#2d6a4f] hover:underline sm:text-xs">Lihat detail</Link>
+        </div>
+        <div className={`${compactCalendar ? 'mt-3' : 'mt-5'} flex items-center justify-between`}>
+          <span className="text-xs font-bold capitalize text-[#1b2a24]">{monthLabel}</span>
+          <div className="flex gap-1">
+            <button type="button" aria-label="Bulan sebelumnya" onClick={() => changeMonth(-1)} className="grid h-6 w-6 place-items-center rounded-full border border-[#e5eae7] text-[#6b7c74] hover:bg-[#f1f5f3]"><ChevronLeft className="h-3.5 w-3.5" /></button>
+            <button type="button" aria-label="Bulan berikutnya" onClick={() => changeMonth(1)} className="grid h-6 w-6 place-items-center rounded-full bg-[#2d6a4f] text-white hover:bg-[#22543d]"><ChevronRight className="h-3.5 w-3.5" /></button>
+          </div>
+        </div>
+        <div className={`${compactCalendar ? 'mt-2 gap-x-1 gap-y-0.5' : 'mt-3 gap-1'} grid grid-cols-7 text-center`}>
+          {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((day) => <span key={day} className="text-[9px] font-semibold text-[#9ca8a2]">{day}</span>)}
+          {cells.map((day, index) => {
+            if (day === null) return <span key={`empty-${index}`} className={compactCalendar ? 'h-6 w-6' : 'h-7 w-7'} />;
+            const key = dateKey(year, monthIndex, day);
+            const selected = key === schedule.selectedDate;
+            const marked = schedule.markedDates.includes(key);
+            return (
+              <span key={key} className={`mx-auto grid place-items-center rounded-full text-[10px] font-semibold ${compactCalendar ? 'h-6 w-6' : 'h-7 w-7'} ${selected ? 'bg-[#2d6a4f] text-white shadow-sm' : marked ? 'bg-[#dbeafe] text-[#2d6a4f]' : 'bg-[#f3f6f4] text-[#6b7c74]'}`}>
+                {String(day).padStart(2, '0')}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className={`${compactCalendar ? 'mt-3 pt-3' : 'mt-5 pt-4'} border-t border-[#e5eae7]`}>
+        <p className="text-[10px] font-bold text-[#6b7c74]">Agenda Saya</p>
+        <div className="mt-2 text-[9px] text-[#9ca8a2]">{schedule.agenda.startTime}</div>
+        <Link href={schedule.agenda.href} className={`mt-1.5 flex items-center gap-3 rounded-xl border border-[#b9dfc7] bg-[#eff9f2] transition hover:border-[#8fc9a4] ${compactCalendar ? 'p-2' : 'p-2.5'}`}>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#2d6a4f] shadow-sm"><PackageOpen className="h-4 w-4" /></span>
+          <span className="min-w-0 flex-1">
+            <strong className="block truncate text-[10px] text-[#1b2a24]">{schedule.agenda.title}</strong>
+            <small className="block truncate text-[8px] text-[#6b7c74]">{schedule.agenda.subtitle}</small>
+          </span>
+          <span className="shrink-0 text-right">
+            <small className="block text-[8px] font-bold text-[#1b2a24]">{schedule.agenda.startTime}–{schedule.agenda.endTime}</small>
+            <em className="mt-1 inline-block rounded bg-[#2d6a4f] px-1.5 py-0.5 text-[7px] font-bold not-italic text-white">{schedule.agenda.status}</em>
+          </span>
+        </Link>
+        <div className="mt-1.5 text-[9px] text-[#9ca8a2]">{schedule.agenda.endTime}</div>
+      </div>
+    </aside>
+  );
+}
+
+function activityTone(activity: RecentActivity) {
+  if (activity.tone === 'success') return { dot: 'bg-[#2d6a4f]', badge: 'bg-[#d8f3dc] text-[#2d6a4f]' };
+  if (activity.tone === 'warning') return { dot: 'bg-[#e6a84d]', badge: 'bg-[#fef3c7] text-[#a66710]' };
+  return { dot: 'bg-[#7caee8]', badge: 'bg-[#dbeafe] text-[#32669f]' };
 }
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-6" data-testid="dashboard-skeleton">
-      <div className="flex items-center justify-between gap-4">
-        <Skeleton className="h-10 w-64 rounded-xl bg-white/70" />
-        <Skeleton className="h-10 w-72 rounded-xl bg-white/70" />
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-[180px] w-full rounded-[20px] bg-white/70" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.75fr)]">
-        <Skeleton className="h-[430px] w-full rounded-[28px] bg-white/70" />
-        <Skeleton className="h-[430px] w-full rounded-[28px] bg-white/70" />
-      </div>
+      <div className="flex justify-between"><Skeleton className="h-10 w-64 rounded-xl" /><Skeleton className="h-10 w-64 rounded-xl" /></div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[146px] rounded-[20px]" />)}</div>
+      <div className="grid gap-6 lg:grid-cols-12"><Skeleton className="h-[414px] rounded-[20px] lg:col-span-8" /><Skeleton className="h-[414px] rounded-[20px] lg:col-span-4" /></div>
     </div>
   );
 }
@@ -153,10 +212,7 @@ export function DashboardView() {
     setLoading(true);
     setError(null);
     try {
-      const [summaryResponse, trendResponse] = await Promise.all([
-        getDashboardSummary(),
-        getDashboardTrend(),
-      ]);
+      const [summaryResponse, trendResponse] = await Promise.all([getDashboardSummary(), getDashboardTrend()]);
       setSummary(summaryResponse);
       setTrend(trendResponse);
     } catch (fetchError) {
@@ -166,305 +222,102 @@ export function DashboardView() {
     }
   };
 
-  const handleShareReport = async () => {
-    const shareData = {
-      title: 'SIGMA Dashboard Overview',
-      text: 'Ringkasan operasional supply chain SIGMA.',
-      url: window.location.href,
-    };
+  useEffect(() => {
+    let active = true;
+    Promise.all([getDashboardSummary(), getDashboardTrend()])
+      .then(([summaryResponse, trendResponse]) => {
+        if (!active) return;
+        setSummary(summaryResponse);
+        setTrend(trendResponse);
+      })
+      .catch((fetchError: unknown) => {
+        if (active) setError(fetchError instanceof Error ? fetchError.message : 'Gagal memuat data dashboard');
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
+  const handleShareReport = async () => {
+    const shareData = { title: 'SIGMA Dashboard Overview', text: 'Ringkasan operasional supply chain SIGMA.', url: window.location.href };
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-        return;
-      }
-      await navigator.clipboard?.writeText(shareData.url);
+      if (navigator.share) await navigator.share(shareData);
+      else await navigator.clipboard?.writeText(shareData.url);
     } catch {
       return;
     }
   };
 
-  useEffect(() => {
-    let isActive = true;
-
-    Promise.all([getDashboardSummary(), getDashboardTrend()])
-      .then(([summaryResponse, trendResponse]) => {
-        if (!isActive) return;
-        setSummary(summaryResponse);
-        setTrend(trendResponse);
-      })
-      .catch((fetchError: unknown) => {
-        if (!isActive) return;
-        setError(fetchError instanceof Error ? fetchError.message : 'Gagal memuat data dashboard');
-      })
-      .finally(() => {
-        if (isActive) setLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
-
   if (loading) return <DashboardSkeleton />;
-
   if (error || !summary || !trend) {
-    return (
-      <ErrorState
-        className="rounded-[28px] border-white/70 bg-white/80 shadow-[0_20px_50px_rgba(45,79,119,0.08)] backdrop-blur-xl"
-        title="Gagal Memuat Dashboard"
-        message={error || 'Terjadi kesalahan sistem saat mengambil data rantai pasok.'}
-        onRetry={fetchData}
-      />
-    );
+    return <ErrorState className={`${PANEL_CLASS} min-h-64`} title="Gagal Memuat Dashboard" message={error || 'Data operasional tidak tersedia.'} onRetry={fetchData} />;
   }
 
-  const safeStockCount = Math.max(
-    summary.totalProducts - summary.lowStockCount - summary.stockoutCount - summary.expiring30DaysCount,
-    0
-  );
-  const stockStatusData = [
-    { name: 'Stok aman', value: safeStockCount, color: CHART_COLORS.blue },
-    { name: 'Stok menipis', value: summary.lowStockCount, color: CHART_COLORS.amber },
-    { name: 'Stok habis', value: summary.stockoutCount, color: CHART_COLORS.red },
-    { name: 'Kedaluwarsa ≤30 hari', value: summary.expiring30DaysCount, color: CHART_COLORS.violet },
-  ];
-  const totalAttention = summary.lowStockCount + summary.stockoutCount + summary.expiring30DaysCount;
-  const latestStockout = trend.monthlyStockout.at(-1)?.stockoutCount ?? 0;
-
   return (
-    <div className="relative space-y-7 pb-4">
-      <section className="space-y-5" aria-labelledby="dashboard-overview-title">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 id="dashboard-overview-title" className="text-2xl font-bold tracking-[-0.04em] text-[#132e50] sm:text-3xl">
-              Dashboard Overview
-            </h1>
-            <p className="mt-1.5 text-[11px] text-[#7b8ca1] sm:text-xs">
-              Ringkasan kesehatan stok dan arus permintaan hari ini
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => void handleShareReport()}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dce5ef] bg-white px-4 text-[11px] font-semibold text-[#294765] shadow-[0_2px_7px_rgba(35,72,118,0.05)] transition hover:border-[#c7d8eb] hover:bg-[#f8fbff] sm:text-xs"
-            >
-              <Share2 className="h-4 w-4 text-[#68819a]" strokeWidth={1.9} />
-              Bagikan Laporan
-            </button>
-            <Link
-              href="/requisitions/create"
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1769e8] px-4 text-[11px] font-semibold text-white shadow-[0_7px_18px_rgba(23,105,232,0.2)] transition hover:bg-[#0d5acb] sm:text-xs"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2} />
-              Buat Permintaan
-            </Link>
-          </div>
+    <div className="space-y-6 pb-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="font-display text-2xl font-bold tracking-[-0.04em] text-[#1b2a24] sm:text-3xl">Dashboard Overview</h1>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => void handleShareReport()} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#e5eae7] bg-white px-4 text-[11px] font-semibold text-[#1b2a24] shadow-sm transition hover:bg-[#f1f5f3] sm:text-xs">
+            <Share2 className="h-4 w-4 text-[#6b7c74]" /> Bagikan Laporan
+          </button>
+          <Link href="/requisitions/create" className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#2d6a4f] px-4 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#22543d] sm:text-xs">
+            <Plus className="h-4 w-4" /> Buat Permintaan
+          </Link>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            title="Total Produk"
-            value={numberFormatter.format(summary.totalProducts)}
-            unit="SKU"
-            href="/products"
-            visual="pulse"
-            detail={<>Produk aktif terdaftar di <strong className="font-semibold text-[#2f6fbd]">seluruh jaringan layanan</strong></>}
-          />
-          <MetricCard
-            title="Stok Menipis"
-            value={numberFormatter.format(summary.lowStockCount)}
-            unit="SKU"
-            href="/inventory?status=LOW_STOCK"
-            visual="curve"
-            detail={<>Item telah mencapai <strong className="font-semibold text-[#2f6fbd]">batas stok minimum</strong></>}
-          />
-          <MetricCard
-            title="Stok Habis"
-            value={numberFormatter.format(summary.stockoutCount)}
-            unit="SKU"
-            href="/inventory?status=OUT_OF_STOCK"
-            visual="bars"
-            detail={<>Item membutuhkan <strong className="font-semibold text-[#2f6fbd]">tindak lanjut segera</strong></>}
-          />
-          <MetricCard
-            title="Pending Requisition"
-            value={numberFormatter.format(summary.pendingRequisitionsCount)}
-            unit="REQ"
-            href="/requisitions?status=PENDING_REVIEW"
-            visual="steps"
-            detail={<>Permintaan masih <strong className="font-semibold text-[#2f6fbd]">menunggu persetujuan</strong></>}
-          />
-        </div>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ringkasan inventori">
+        <MetricCard title="Total Produk" value={numberFormatter.format(summary.totalProducts)} unit="SKU" href="/products" visual="pulse" detail={<>Produk aktif tersedia di <strong className="text-[#2d6a4f]">seluruh jaringan layanan</strong></>} />
+        <MetricCard title="Stok Menipis" value={numberFormatter.format(summary.lowStockCount)} unit="SKU" href="/inventory?status=LOW_STOCK" visual="curve" detail={<>Item telah mencapai <strong className="text-[#2d6a4f]">batas stok minimum</strong></>} />
+        <MetricCard title="Stok Habis" value={numberFormatter.format(summary.stockoutCount)} unit="SKU" href="/inventory?status=OUT_OF_STOCK" visual="bars" detail={<>Item membutuhkan <strong className="text-[#2d6a4f]">tindak lanjut segera</strong></>} />
+        <MetricCard title="Pending Requisition" value={numberFormatter.format(summary.pendingRequisitionsCount)} unit="REQ" href="/requisitions?status=SUBMITTED" visual="steps" detail={<>Permintaan masih <strong className="text-[#2d6a4f]">menunggu persetujuan</strong></>} />
       </section>
 
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.75fr)]">
-        <Card shadow="none" className="rounded-[28px] border-white/80 bg-white/88 shadow-[0_20px_55px_rgba(40,78,124,0.08)] backdrop-blur-xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7d8da4]">Performance trend</p>
-              <h2 className="mt-1 text-lg font-bold tracking-[-0.025em] text-[#183b63]">Tren Pemenuhan Permintaan (Fill Rate)</h2>
-              <p className="mt-1 text-[11px] text-[#8695a8]">Volume pasok dan rasio pemenuhan per bulan</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-[#f6f9fd] px-3 py-2 text-[10px] font-semibold text-[#718298]">
-              <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#173b66]" />Volume pasok</span>
-              <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#6aa7f5]" />Fill rate</span>
-            </div>
-          </div>
-          <div className="mt-7 h-[300px] w-full sm:h-[340px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend.monthlyFillRate} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="fillRateLine" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#91c7ff" />
-                    <stop offset="100%" stopColor="#4a8ff0" />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} stroke={CHART_COLORS.grid} strokeDasharray="4 5" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} dy={10} />
-                <YAxis yAxisId="volume" axisLine={false} tickLine={false} tick={{ fill: CHART_COLORS.muted, fontSize: 10 }} />
-                <YAxis yAxisId="rate" orientation="right" domain={[0, 100]} hide />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: '#cbdcf0', strokeDasharray: '4 4' }} />
-                <Line yAxisId="volume" type="monotone" dataKey="qtyLeft" name="Volume Pasok" stroke={CHART_COLORS.navy} strokeWidth={2.5} dot={{ r: 3, fill: '#fff', strokeWidth: 2 }} activeDot={{ r: 5 }} />
-                <Line yAxisId="rate" type="monotone" dataKey="fillRatePercent" name="Fill Rate %" stroke="url(#fillRateLine)" strokeWidth={3} dot={{ r: 3.5, fill: '#fff', stroke: CHART_COLORS.blue, strokeWidth: 2 }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-12" aria-label="Fulfillment dan agenda">
+        <FulfillmentChart data={trend.weeklyFulfillment} />
+        <OperationalCalendar schedule={trend.operationalSchedule} />
+      </section>
 
-        <Card shadow="none" className="rounded-[28px] border-white/80 bg-white/88 shadow-[0_20px_55px_rgba(40,78,124,0.08)] backdrop-blur-xl">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7d8da4]">Inventory health</p>
-          <h2 className="mt-1 text-lg font-bold tracking-[-0.025em] text-[#183b63]">Distribusi Status Stok</h2>
-          <p className="mt-1 text-[11px] text-[#8695a8]">Proporsi kesehatan stok keseluruhan</p>
-
-          <div className="relative mx-auto mt-2 h-[220px] max-w-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={stockStatusData} cx="50%" cy="50%" innerRadius={66} outerRadius={88} paddingAngle={5} cornerRadius={8} dataKey="value" stroke="none">
-                  {stockStatusData.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
-              <div>
-                <p className="text-[28px] font-bold leading-none tracking-[-0.05em] text-[#183b63]">{totalAttention}</p>
-                <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.13em] text-[#8b9aac]">Perlu perhatian</p>
-              </div>
-            </div>
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-12" aria-label="Transaksi dan aktivitas terbaru">
+        <div className={`${PANEL_CLASS} p-6 lg:col-span-5`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2"><WalletCards className="h-5 w-5 text-[#2d6a4f]" /><h2 className="font-display text-base font-bold text-[#1b2a24]">Riwayat Permintaan</h2></div>
+            <Link href="/requisitions" aria-label="Lihat semua permintaan" className="text-[#9ca8a2] hover:text-[#1b2a24]"><MoreHorizontal className="h-4 w-4" /></Link>
           </div>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            {stockStatusData.map((item) => (
-              <div key={item.name} className="rounded-2xl border border-[#edf2f8] bg-[#f9fbfe] px-3 py-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="truncate text-[9px] font-semibold text-[#78889c]">{item.name}</span>
-                </div>
-                <p className="mt-1.5 pl-4 text-sm font-bold text-[#24486f]">
-                  {numberFormatter.format(item.value)} SKU
-                </p>
-              </div>
+          <div className="mt-4 space-y-3">
+            {trend.recentTransactions.length === 0 ? (
+              <p className="rounded-xl bg-[#f8faf9] p-4 text-xs text-[#6b7c74]">Belum ada transaksi terbaru.</p>
+            ) : trend.recentTransactions.slice(0, 2).map((transaction) => (
+              <Link key={transaction.id} href={transaction.href} className="flex items-center justify-between gap-3 rounded-xl border border-[#edf1ee] bg-[#f8faf9] p-3 transition hover:bg-[#f1f5f3]">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[#e5eae7] bg-white text-[#6b7c74]"><PackageOpen className="h-4 w-4" /></span>
+                  <span className="min-w-0"><strong className="block truncate text-xs text-[#1b2a24]">{transaction.reference}</strong><small className="block text-[10px] font-bold text-[#1b2a24]">{numberFormatter.format(transaction.quantity)} unit</small></span>
+                </span>
+                <span className="shrink-0 text-right"><em className="inline-block rounded-full bg-[#d8f3dc] px-2.5 py-1 text-[9px] font-bold not-italic text-[#2d6a4f]">{transaction.status}</em><small className="mt-1 block text-[9px] text-[#9ca8a2]">{dateFormatter.format(new Date(transaction.occurredAt))}</small></span>
+              </Link>
             ))}
           </div>
-        </Card>
-      </section>
+        </div>
 
-      <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Card shadow="none" className="rounded-[26px] border-white/80 bg-white/88 shadow-[0_18px_48px_rgba(40,78,124,0.07)] backdrop-blur-xl">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7d8da4]">Stockout monitor</p>
-              <h3 className="mt-1 text-base font-bold text-[#183b63]">Tren Stok Habis</h3>
-            </div>
-            <span className="rounded-2xl bg-[#fff0ee] px-3 py-2 text-[10px] font-bold text-[#c9544d]">{latestStockout} terbaru</span>
+        <div className={`${PANEL_CLASS} p-6 lg:col-span-7`}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2"><Clock3 className="h-5 w-5 text-[#2d6a4f]" /><h2 className="font-display text-base font-bold text-[#1b2a24]">Recent Activity</h2></div>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#e5eae7] bg-[#f3f6f4] px-3 py-1 text-[10px] font-semibold text-[#1b2a24]">Bulan Ini <ChevronDown className="h-3.5 w-3.5 text-[#6b7c74]" /></span>
           </div>
-          <div className="mt-5 h-[215px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend.monthlyStockout} margin={{ top: 10, right: 8, left: -28, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke={CHART_COLORS.grid} strokeDasharray="4 5" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: CHART_COLORS.muted, fontSize: 9 }} dy={8} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: CHART_COLORS.muted, fontSize: 9 }} allowDecimals={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Line type="monotone" dataKey="stockoutCount" name="Stockout" stroke={CHART_COLORS.red} strokeWidth={3} dot={{ r: 3, fill: '#fff', strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card shadow="none" className="rounded-[26px] border-white/80 bg-white/88 shadow-[0_18px_48px_rgba(40,78,124,0.07)] backdrop-blur-xl">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7d8da4]">Category flow</p>
-          <h3 className="mt-1 text-base font-bold text-[#183b63]">Pengeluaran per Kelas Terapi</h3>
-          <div className="mt-5 h-[245px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trend.categoryBreakdown} margin={{ top: 8, right: 4, left: -25, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="categoryBar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#65a7f4" />
-                    <stop offset="100%" stopColor="#9dcbff" />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} stroke={CHART_COLORS.grid} strokeDasharray="4 5" />
-                <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fill: CHART_COLORS.muted, fontSize: 8 }} tickFormatter={(value) => value.split(' ')[0]} dy={8} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: CHART_COLORS.muted, fontSize: 9 }} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="quantity" name="Jumlah Unit" fill="url(#categoryBar)" radius={[8, 8, 3, 3]} maxBarSize={30} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card shadow="none" className="rounded-[26px] border-white/80 bg-white/88 shadow-[0_18px_48px_rgba(40,78,124,0.07)] backdrop-blur-xl">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7d8da4]">Movement ranking</p>
-              <h3 className="mt-1 text-base font-bold text-[#183b63]">Top 5 Produk Fast-Moving</h3>
-            </div>
-            <Sparkles className="h-5 w-5 text-[#7b9fc6]" strokeWidth={1.7} />
-          </div>
-          <div className="mt-5 space-y-3">
-            {trend.fastMovers.slice(0, 5).map((product, index) => {
-              const maximum = Math.max(...trend.fastMovers.map((item) => item.totalQty), 1);
-              const width = Math.max((product.totalQty / maximum) * 100, 6);
+          <div className="relative mt-4 space-y-4 pl-6 before:absolute before:bottom-2 before:left-2 before:top-2 before:w-0.5 before:bg-[#e5eae7]">
+            {trend.recentActivities.length === 0 ? (
+              <p className="text-xs text-[#6b7c74]">Belum ada aktivitas terbaru.</p>
+            ) : trend.recentActivities.map((activity) => {
+              const tone = activityTone(activity);
               return (
-                <div key={`${product.name}-${index}`} className="rounded-2xl bg-[#f7faff] px-3.5 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-white text-[9px] font-bold text-[#4b79a8] shadow-sm">{index + 1}</span>
-                      <span className="truncate text-[10px] font-semibold text-[#47617f]" title={product.name}>{product.name}</span>
-                    </div>
-                    <span className="shrink-0 text-[10px] font-bold text-[#234970]">{numberFormatter.format(product.totalQty)}</span>
-                  </div>
-                  <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-[#e6eef8]">
-                    <div className="h-full rounded-full bg-[linear-gradient(90deg,#82bbf7,#4b8fe4)]" style={{ width: `${width}%` }} />
-                  </div>
-                </div>
+                <Link key={activity.id} href={activity.href} className="relative flex items-center justify-between gap-4">
+                  <span className={`absolute -left-6 top-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-white ${tone.dot}`} />
+                  <span className="min-w-0"><strong className="block truncate text-xs text-[#1b2a24]">{activity.title}</strong><small className="block text-[10px] text-[#6b7c74]">{dateFormatter.format(new Date(activity.occurredAt))} • <span className="font-semibold text-[#1b2a24]">{new Date(activity.occurredAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></small></span>
+                  <em className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-bold not-italic ${tone.badge}`}><Check className="h-3 w-3" />{activity.status}</em>
+                </Link>
               );
             })}
           </div>
-          <Link href="/reports" className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-bold text-[#4a7fb5] transition hover:text-[#285f99]">
-            Lihat laporan lengkap <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </Card>
-      </section>
-
-      <section className="rounded-[26px] border border-white/80 bg-[linear-gradient(110deg,rgba(255,255,255,0.88),rgba(233,245,255,0.86))] p-5 shadow-[0_18px_48px_rgba(40,78,124,0.07)] backdrop-blur-xl sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-3.5">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#e9f3ff] text-[#4386d3]">
-              <CheckCircle2 className="h-5 w-5" strokeWidth={1.9} />
-            </span>
-            <div>
-              <p className="text-sm font-bold text-[#24486f]">Fokus operasional berikutnya</p>
-              <p className="mt-1 max-w-3xl text-[11px] leading-5 text-[#788ba2]">
-                Ada {totalAttention} SKU yang perlu perhatian dan {summary.pendingRequisitionsCount} permintaan menunggu persetujuan. Prioritaskan item stockout sebelum menyusun pengadaan ulang.
-              </p>
-            </div>
-          </div>
-          <Link href="/inventory/reorder" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[#d4e5f6] bg-white px-4 text-[10px] font-bold text-[#376b9f] shadow-sm transition hover:-translate-y-0.5">
-            Buka rekomendasi reorder <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
         </div>
       </section>
     </div>

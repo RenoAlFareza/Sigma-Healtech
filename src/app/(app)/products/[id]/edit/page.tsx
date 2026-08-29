@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function EditProductPage({ params }: PageProps<'/products/[id]/edit'>) {
   const { id } = await params;
   return (
-    <div className="max-w-3xl p-6">
+    <div className="w-full max-w-3xl">
       <ToastProvider>
         <ProductForm mode="edit" productId={id} />
       </ToastProvider>

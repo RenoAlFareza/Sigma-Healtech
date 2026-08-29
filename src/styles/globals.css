@@ -2,26 +2,26 @@
 
 @theme {
   /* Atria Banner Health Brand & Action Colors */
-  --color-brand: #00205B;
-  --color-accent: #007EB4;
-  --color-accent-hover: #00638E;
-  --color-accent-light: #E6F5FC;
-  --color-success: #008522;
-  --color-success-light: #E6F7E9;
+  --color-brand: #2D6A4F;
+  --color-accent: #52B788;
+  --color-accent-hover: #22543D;
+  --color-accent-light: #E8F5E9;
+  --color-success: #2D6A4F;
+  --color-success-light: #D8F3DC;
   --color-error: #DA291C;
   --color-error-light: #FDEBEA;
-  --color-alert: #0077C8;
-  --color-alert-light: #EBF5FC;
-  --color-warning: #BF8900;
-  --color-warning-light: #FEF7E6;
+  --color-alert: #4F8CC9;
+  --color-alert-light: #DBEAFE;
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
 
   /* Semantic UI Tokens */
-  --color-text-main: #303235;
-  --color-text-muted: #56595D;
-  --color-text-placeholder: #7B7F84;
-  --color-border-main: #CFD1D3;
+  --color-text-main: #1B2A24;
+  --color-text-muted: #6B7C74;
+  --color-text-placeholder: #9CA8A2;
+  --color-border-main: #CFD8D3;
   --color-surface-disabled: #E1E1E2;
-  --color-surface-hover: #F5F5F5;
+  --color-surface-hover: #F1F5F3;
 
   /* Neutral Scale */
   --color-neutral-950: #0B0C0D;
@@ -38,42 +38,43 @@
 
   /* Core Blue Scale */
   --color-core-950: #03060D;
-  --color-core-900: #00205B;
-  --color-core-800: #093582;
-  --color-core-700: #1C4EA5;
-  --color-core-600: #3A6CC1;
-  --color-core-500: #628DD6;
-  --color-core-400: #8EAFE6;
-  --color-core-300: #B7CCF0;
-  --color-core-200: #D6E2F7;
-  --color-core-100: #EBF0FA;
-  --color-core-50: #F6F7FA;
+  --color-core-900: #1B2A24;
+  --color-core-800: #22543D;
+  --color-core-700: #2D6A4F;
+  --color-core-600: #40916C;
+  --color-core-500: #52B788;
+  --color-core-400: #74C69D;
+  --color-core-300: #95D5B2;
+  --color-core-200: #B7E4C7;
+  --color-core-100: #D8F3DC;
+  --color-core-50: #F3F6F4;
 
   /* Focus & Accessibility */
-  --color-focus-ring: #0B8EC6;
+  --color-focus-ring: #2D6A4F;
 
   /* Typography */
-  --font-serif: Georgia, Cambria, 'Times New Roman', serif;
-  --font-heading: Georgia, Cambria, 'Times New Roman', serif;
+  --font-serif: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
+  --font-heading: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
+  --font-display: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Border Radii */
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-pill: 16px;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-card: 0 4px 15px 0 rgba(0, 0, 0, 0.13);
-  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 2px 8px rgba(27, 42, 36, 0.04);
+  --shadow-elevated: 0 12px 32px -4px rgba(27, 42, 36, 0.14), 0 4px 10px -2px rgba(27, 42, 36, 0.06);
 }
 
 :root {
-  --background: #FAFAFA;
-  --foreground: #303235;
+  --background: #F8FAF9;
+  --foreground: #1B2A24;
 }
 
 body {
@@ -86,7 +87,7 @@ body {
 
 /* Global focus-visible accessibility indicator */
 :focus-visible {
-  outline: 2px solid #0B8EC6;
+  outline: 2px solid #2D6A4F;
   outline-offset: 2px;
 }
 
@@ -97,14 +98,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5F5F5;
+  background: #F8FAF9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #B8BBBF;
-  border-radius: 3px;
+  background: #CFD8D3;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9CA0A5;
+  background: #9CA8A2;
 }

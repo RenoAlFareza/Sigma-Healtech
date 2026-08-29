@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ReorderReportPage() {
   return (
-    <div className="p-6">
+    <div className="w-full">
       <ReorderReport />
     </div>
   );

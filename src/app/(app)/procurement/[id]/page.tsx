@@ -14,7 +14,7 @@ export default async function POMDetailPage({
 }) {
   const { id } = await params;
   return (
-    <div className="p-6">
+    <div className="w-full">
       <ToastProvider>
         <ProcurementDetail id={id} />
       </ToastProvider>

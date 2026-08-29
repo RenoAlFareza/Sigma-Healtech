@@ -12,7 +12,7 @@ export default async function InboundPage({ searchParams }: PageProps<'/inbound'
   const { id } = await searchParams;
 
   return (
-    <div className="p-6">
+    <div className="w-full">
       {typeof id === 'string' && id ? (
         <ToastProvider>
           <InboundReceiving id={id} />

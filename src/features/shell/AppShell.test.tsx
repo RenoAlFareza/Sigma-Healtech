@@ -21,6 +21,10 @@ describe('AppShell Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ lowStockCount: 5, stockoutCount: 2, pendingRequisitionsCount: 7 }),
+    }));
   });
 
   it('renders topbar with logo, user menu, and role-filtered navigation', () => {
@@ -46,7 +50,7 @@ describe('AppShell Component', () => {
 
     expect(screen.getByText('SIGMA')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Buka menu pengguna/i })).toBeInTheDocument();
-    expect(screen.queryByText('Administrator Utama')).not.toBeInTheDocument();
+    expect(screen.getByText('Administrator Utama')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Child Content')).toBeInTheDocument();
@@ -136,7 +140,7 @@ describe('AppShell Component', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Buka menu pengguna/i }));
-    const logoutBtn = screen.getByRole('button', { name: /Keluar/i });
+    const logoutBtn = screen.getAllByRole('button', { name: /Keluar/i }).at(-1)!;
     fireEvent.click(logoutBtn);
 
     await waitFor(() => {
@@ -145,7 +149,7 @@ describe('AppShell Component', () => {
     });
   });
 
-  it('navigates to product search when GlobalSearch is submitted', () => {
+  it('opens global search from the header and navigates when submitted', () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
       role: 'ADMIN',
@@ -163,7 +167,7 @@ describe('AppShell Component', () => {
       </ActiveLocationProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Buka pencarian/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Buka pencarian global/i }));
 
     expect(screen.getByRole('dialog', { name: /Pencarian global/i })).toBeInTheDocument();
 
@@ -174,5 +178,44 @@ describe('AppShell Component', () => {
     fireEvent.submit(searchForm);
 
     expect(mockPush).toHaveBeenCalledWith('/products?search=Paracetamol');
+  });
+
+  it('opens operational notifications with live summary counts', async () => {
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [],
+      logout: mockLogout,
+    });
+
+    render(<ActiveLocationProvider><AppShell><div>Content</div></AppShell></ActiveLocationProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Notifikasi' }));
+    expect(await screen.findByText('2 SKU stok habis')).toBeInTheDocument();
+    expect(screen.getByText('7 permintaan menunggu')).toBeInTheDocument();
+  });
+
+  it('renders role-based sidebar quick action and mobile drawer', () => {
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [
+        { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+        {
+          id: 'outbound',
+          label: 'Outbound',
+          groups: [{ id: 'requests', label: 'Permintaan', items: [{ id: 'outbound-requisition-create', label: 'Buat Permintaan', href: '/requisitions/create' }] }],
+        },
+      ],
+      logout: mockLogout,
+    });
+
+    render(<ActiveLocationProvider><AppShell><div>Content</div></AppShell></ActiveLocationProvider>);
+    expect(screen.getAllByRole('link', { name: 'Buat Permintaan' })[0]).toHaveAttribute('href', '/requisitions/create');
+    fireEvent.click(screen.getByRole('button', { name: 'Buka menu navigasi' }));
+    expect(screen.getByRole('complementary', { name: 'Menu mobile' })).toBeInTheDocument();
   });
 });

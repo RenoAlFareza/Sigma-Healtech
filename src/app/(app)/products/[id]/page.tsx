@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: PageProps<'/products/[id]'>):
 export default async function ProductDetailPage({ params }: PageProps<'/products/[id]'>) {
   const { id } = await params;
   return (
-    <div className="max-w-3xl p-6">
+    <div className="w-full max-w-3xl">
       <ProductDetail productId={id} />
     </div>
   );

@@ -16,7 +16,7 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
   const showStockCardGuide = params.view === 'stock-card';
 
   return (
-    <div className="p-6">
+    <div className="w-full">
       <InventoryBrowser
         key={`${initialStatus}:${showStockCardGuide}`}
         initialStatus={initialStatus}
