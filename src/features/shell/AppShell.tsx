@@ -137,6 +137,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notificationSummary, setNotificationSummary] = useState<DashboardNotificationSummary | null>(null);
   const desktopPopoverRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
+  const searchPopoverRef = useRef<HTMLDivElement>(null);
 
   const destinations = useMemo(() => allDestinations(menu), [menu]);
   const quickAction = useMemo(() => findDestination(destinations, [
@@ -157,6 +158,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       return href ? [{ ...candidate, href }] : [];
     });
   }, [menu]);
+  const searchableItems = useMemo<MenuDestination[]>(() => menu.flatMap((item) => {
+    if (item.href) {
+      return [{ id: item.id, label: item.label, href: item.href, description: `Buka halaman ${item.label}` }];
+    }
+    return item.groups?.flatMap((group) => group.items) ?? [];
+  }), [menu]);
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase('id-ID');
+    if (!query) return [];
+    return searchableItems
+      .filter((item) => `${item.label} ${item.description ?? ''}`.toLocaleLowerCase('id-ID').includes(query))
+      .slice(0, 6);
+  }, [searchQuery, searchableItems]);
   const currentActiveMenuId = activeMenuId(pathname, searchParams, menu);
 
   const closePopovers = () => {
@@ -164,12 +178,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setIsProfileOpen(false);
     setIsNotificationsOpen(false);
     setIsHelpOpen(false);
+    setIsSearchOpen(false);
   };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
+        closePopovers();
         setIsSearchOpen(true);
         window.setTimeout(() => document.getElementById('global-search-input')?.focus(), 0);
       }
@@ -181,6 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
+      if (!searchPopoverRef.current?.contains(target)) setIsSearchOpen(false);
       if (!desktopPopoverRef.current?.contains(target) && !sidebarRef.current?.contains(target)) closePopovers();
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -294,24 +311,66 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
 
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                aria-label="Buka pencarian global"
-                onClick={() => {
-                  setOpenMenuId(null);
-                  setIsNotificationsOpen(false);
-                  setIsProfileOpen(false);
-                  setIsSearchOpen(true);
-                }}
-                className="flex h-9 items-center gap-2 rounded-full border border-[#e5eae7] bg-white px-2.5 text-[#6b7c74] shadow-[0_1px_3px_rgba(27,42,36,0.04)] transition hover:border-[#cfd8d3] hover:bg-[#f8faf9] hover:text-[#1b2a24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d6a4f] sm:px-3"
-              >
-                <Search className="h-4 w-4" />
-                <span className="hidden text-[10px] font-semibold sm:inline">Cari</span>
-                <kbd className="hidden rounded-md border border-[#e5eae7] bg-[#f3f6f4] px-1.5 py-0.5 text-[8px] font-bold text-[#9ca8a2] sm:inline">Ctrl K</kbd>
-              </button>
+              <div ref={searchPopoverRef} className="relative">
+                <form onSubmit={handleSearchSubmit} role="search" className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#789087]" />
+                  <input
+                    id="global-search-input"
+                    type="search"
+                    role="combobox"
+                    aria-label="Pencarian global"
+                    aria-expanded={isSearchOpen}
+                    aria-controls="global-search-results"
+                    autoComplete="off"
+                    placeholder="Search... (Press K)"
+                    value={searchQuery}
+                    onFocus={() => {
+                      closePopovers();
+                      setIsSearchOpen(true);
+                    }}
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value);
+                      setIsSearchOpen(true);
+                    }}
+                    className="h-9 w-[132px] rounded-full border border-[#2d6a4f] bg-white pl-9 pr-9 text-[10px] font-medium text-[#1b2a24] outline-none transition placeholder:text-[#a1ada7] hover:bg-[#fbfdfc] focus-visible:outline-none focus-visible:ring-0 sm:w-[240px] sm:text-[11px] [&::-webkit-search-cancel-button]:hidden"
+                  />
+                  <kbd className="pointer-events-none absolute right-2 top-1/2 grid h-5 min-w-5 -translate-y-1/2 place-items-center rounded border border-[#e1e7e3] bg-[#f7f9f8] px-1 text-[9px] font-bold text-[#8b9a92]">K</kbd>
+                </form>
+
+                {isSearchOpen && (
+                  <div id="global-search-results" role="region" aria-label="Quick search results" className="absolute right-0 top-full z-50 mt-2 w-[312px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#e5eae7] bg-white shadow-[0_14px_32px_rgba(27,42,36,0.16)]">
+                    <div className="flex items-center justify-between border-b border-[#edf1ee] px-3.5 py-3">
+                      <strong className="text-[9px] font-extrabold uppercase tracking-[0.06em] text-[#9aa8a1]">Quick Search &amp; Results</strong>
+                      <span className="text-[9px] font-bold text-[#2d6a4f]">{searchResults.length} results</span>
+                    </div>
+                    {searchResults.length > 0 ? (
+                      <div className="max-h-72 space-y-0.5 overflow-y-auto p-2">
+                        {searchResults.map((result) => (
+                          <Link
+                            key={result.id}
+                            href={result.href}
+                            onClick={() => {
+                              setIsSearchOpen(false);
+                              setSearchQuery('');
+                            }}
+                            className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[#f1f5f3]"
+                          >
+                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#e8f5e9] text-[#2d6a4f]"><Search className="h-3.5 w-3.5" /></span>
+                            <span className="min-w-0"><strong className="block truncate text-[11px] text-[#1b2a24]">{result.label}</strong><small className="block truncate text-[9px] text-[#8b9a92]">{result.description ?? result.href}</small></span>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-6 py-7 text-center text-[11px] font-medium text-[#a1ada7]">
+                        {searchQuery.trim() ? 'No matching modules or data found.' : 'Start typing to search modules or data.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="relative">
-                <button type="button" aria-label="Notifikasi" aria-expanded={isNotificationsOpen} onClick={() => { setOpenMenuId(null); setIsProfileOpen(false); setIsNotificationsOpen((open) => !open); }} className={`relative grid h-9 w-9 place-items-center rounded-full transition ${isNotificationsOpen ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#1b2a24]'}`}>
+                <button type="button" aria-label="Notifikasi" aria-expanded={isNotificationsOpen} onClick={() => { setOpenMenuId(null); setIsProfileOpen(false); setIsSearchOpen(false); setIsNotificationsOpen((open) => !open); }} className={`relative grid h-9 w-9 place-items-center rounded-full transition ${isNotificationsOpen ? 'bg-[#e8f5e9] text-[#2d6a4f]' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#1b2a24]'}`}>
                   <Bell className="h-[18px] w-[18px]" /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#ef5350] ring-2 ring-white" />
                 </button>
                 {isNotificationsOpen && (
@@ -328,7 +387,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
               <span className="hidden h-6 w-px bg-[#e5eae7] sm:block" />
               <div className="relative">
-                <button type="button" aria-label="Buka menu pengguna" aria-expanded={isProfileOpen} onClick={() => { setOpenMenuId(null); setIsNotificationsOpen(false); setIsProfileOpen((open) => !open); }} className={`flex items-center gap-2.5 rounded-full p-1 transition ${isProfileOpen ? 'bg-[#f1f5f3]' : 'hover:bg-[#f1f5f3]'}`}>
+                <button type="button" aria-label="Buka menu pengguna" aria-expanded={isProfileOpen} onClick={() => { setOpenMenuId(null); setIsNotificationsOpen(false); setIsSearchOpen(false); setIsProfileOpen((open) => !open); }} className={`flex items-center gap-2.5 rounded-full p-1 transition ${isProfileOpen ? 'bg-[#f1f5f3]' : 'hover:bg-[#f1f5f3]'}`}>
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-[linear-gradient(145deg,#4f8c70,#22543d)] text-[9px] font-bold text-white ring-2 ring-[#e5eae7]">{getInitials(user?.name)}</span>
                   <span className="hidden text-left min-[1320px]:block"><strong className="flex items-center gap-1 text-[10px] text-[#1b2a24]">{user?.name}<ChevronDown className="h-3 w-3 text-[#9ca8a2]" /></strong><small className="block text-[9px] text-[#9ca8a2]">{user?.id}</small></span>
                 </button>
@@ -381,19 +440,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {isSearchOpen && (
-        <div className="fixed inset-0 z-[70] flex items-start justify-center bg-[#1b2a24]/40 px-4 pt-[12vh] backdrop-blur-[2px]" onMouseDown={() => setIsSearchOpen(false)}>
-          <div role="dialog" aria-modal="true" aria-labelledby="global-search-title" className="w-full max-w-xl rounded-[24px] border border-white/80 bg-white p-5 shadow-[0_28px_80px_rgba(27,42,36,0.24)]" onMouseDown={(event) => event.stopPropagation()}>
-            <h2 id="global-search-title" className="sr-only">Pencarian global</h2>
-            <form onSubmit={handleSearchSubmit} className="relative" role="search">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9ca8a2]" />
-              <input id="global-search-input" autoFocus type="search" placeholder="Cari produk, SKU, atau menu..." value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-13 w-full rounded-full border border-[#cfd8d3] bg-[#f8faf9] pl-12 pr-12 text-xs font-medium text-[#1b2a24] outline-none transition placeholder:text-[#9ca8a2] focus:border-[#52b788] focus:bg-white focus:ring-4 focus:ring-[#e8f5e9] sm:text-sm" />
-              <button type="button" aria-label="Tutup pencarian" onClick={() => setIsSearchOpen(false)} className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[#9ca8a2] hover:bg-[#f1f5f3] hover:text-[#1b2a24]"><X className="h-4 w-4" /></button>
-            </form>
-            <p className="px-3 pt-3 text-[10px] text-[#9ca8a2]">Tekan ESC atau klik area luar untuk menutup</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

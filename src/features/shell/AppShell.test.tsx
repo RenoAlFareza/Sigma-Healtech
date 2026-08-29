@@ -189,7 +189,7 @@ describe('AppShell Component', () => {
     });
   });
 
-  it('opens global search from the header and navigates when submitted', () => {
+  it('opens global search as a header dropdown and navigates when submitted', () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
       role: 'ADMIN',
@@ -207,11 +207,10 @@ describe('AppShell Component', () => {
       </ActiveLocationProvider>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Buka pencarian global/i }));
-
-    expect(screen.getByRole('dialog', { name: /Pencarian global/i })).toBeInTheDocument();
-
-    const searchInput = screen.getByPlaceholderText(/Cari produk, SKU, atau menu\.\.\./i);
+    const searchInput = screen.getByPlaceholderText(/Search\.\.\. \(Press K\)/i);
+    fireEvent.focus(searchInput);
+    expect(screen.getByRole('region', { name: /Quick search results/i })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.change(searchInput, { target: { value: 'Paracetamol' } });
     
     const searchForm = screen.getByRole('search');
