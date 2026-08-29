@@ -271,7 +271,7 @@ export function DashboardView() {
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ringkasan inventori">
         <MetricCard title="Persediaan Aktif" value={numberFormatter.format(summary.activeInventoryQuantity)} unit="UNIT" href="/inventory?status=ACTIVE" visual="pulse" detail={<><strong className="text-[#2d6a4f]">{numberFormatter.format(summary.activeLotCount)} lot</strong> pada {numberFormatter.format(summary.activeBinCount)} bin di {summary.locationName}</>} />
-        <MetricCard title="Stok Menipis" value={numberFormatter.format(summary.lowStockCount)} unit="SKU" href="/inventory?status=LOW_STOCK" visual="curve" detail={<>Item telah mencapai <strong className="text-[#2d6a4f]">batas stok minimum</strong></>} />
+        <MetricCard title="Penerimaan Berjalan" value={numberFormatter.format(summary.openInboundQuantity)} unit="UNIT" href="/inbound" visual="curve" detail={<><strong className="text-[#2d6a4f]">{numberFormatter.format(summary.openInboundReceiptCount)} dokumen</strong> menuju {summary.locationName}</>} />
         <MetricCard title="Stok Habis" value={numberFormatter.format(summary.stockoutCount)} unit="SKU" href="/inventory?status=OUT_OF_STOCK" visual="bars" detail={<>Item membutuhkan <strong className="text-[#2d6a4f]">tindak lanjut segera</strong></>} />
         <MetricCard title="Pending Requisition" value={numberFormatter.format(summary.pendingRequisitionsCount)} unit="REQ" href="/requisitions?status=SUBMITTED" visual="steps" detail={<>Permintaan masih <strong className="text-[#2d6a4f]">menunggu persetujuan</strong></>} />
       </section>

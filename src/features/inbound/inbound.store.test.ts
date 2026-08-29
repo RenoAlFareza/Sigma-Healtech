@@ -18,9 +18,11 @@ describe('inbound store', () => {
   it('creates a receipt in CREATED status', () => {
     const r = createReceipt({
       sourceType: 'SUPPLIER',
+      destinationLocationId: 'wh-pusat',
       items: [{ productId: '93000462', qtyExpected: 50, lot: 'LOT-ABC', expiry: '2028-01-01', bin: '' }],
     });
     expect(r.status).toBe('CREATED');
+    expect(r.destinationLocationId).toBe('wh-pusat');
     expect(r.receiptNumber).toMatch(/^IN-2026-/);
   });
 
@@ -85,5 +87,10 @@ describe('inbound store', () => {
 
   it('lists receipts with status filter', () => {
     expect(listReceipts({ status: 'CREATED' }).length).toBeGreaterThan(0);
+  });
+
+  it('lists receipts for the destination warehouse', () => {
+    expect(listReceipts({ destinationLocationId: 'wh-pusat' })).toHaveLength(1);
+    expect(listReceipts({ destinationLocationId: 'depo-igd' })).toHaveLength(0);
   });
 });

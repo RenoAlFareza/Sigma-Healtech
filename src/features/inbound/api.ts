@@ -3,6 +3,7 @@ import type { InboundItem, InboundReceipt, InboundStatus } from '@/shared/types/
 
 export interface ListInboundParams {
   status?: InboundStatus;
+  destinationLocationId?: string;
 }
 
 export interface ListInboundResponse {
@@ -13,6 +14,7 @@ export interface ListInboundResponse {
 export interface CreateInboundPayload {
   sourceType: string;
   referenceId?: string;
+  destinationLocationId?: string;
   items: InboundItem[];
 }
 
@@ -25,6 +27,7 @@ export interface CommitInboundPayload {
 export async function listInbound(params: ListInboundParams = {}): Promise<ListInboundResponse> {
   const sp = new URLSearchParams();
   if (params.status) sp.set('status', params.status);
+  if (params.destinationLocationId) sp.set('destinationLocationId', params.destinationLocationId);
   const qs = sp.toString();
   return apiFetch<ListInboundResponse>(qs ? `/inbound?${qs}` : '/inbound');
 }

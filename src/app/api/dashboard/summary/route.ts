@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/api/_fixtures/store';
 import { getStockForLocation } from '@/api/_fixtures/inventory';
 import { getStockStatus } from '@/features/inventory/stockStatus';
+import { listReceipts } from '@/api/_fixtures/inbound';
 
 export async function GET(request: Request) {
   const { products, locations } = getDb();
@@ -21,6 +22,15 @@ export async function GET(request: Request) {
   const lowStockCount = new Set(stock.filter((item) => item.status === 'LOW_STOCK').map((item) => item.product.id)).size;
   const stockoutCount = new Set(stock.filter((item) => item.status === 'STOCKOUT').map((item) => item.product.id)).size;
   const expiring30DaysCount = new Set(stock.filter((item) => item.status === 'EXPIRING').map((item) => item.product.id)).size;
+  const openInboundReceipts = listReceipts({ destinationLocationId: requestedLocationId || undefined })
+    .filter((receipt) => receipt.status === 'CREATED' || receipt.status === 'RECEIVING');
+  const openInboundQuantity = openInboundReceipts.reduce(
+    (receiptTotal, receipt) => receiptTotal + receipt.items.reduce(
+      (itemTotal, item) => itemTotal + Math.max(item.qtyExpected - (item.qtyReceived ?? 0), 0),
+      0
+    ),
+    0
+  );
 
   return NextResponse.json({
     totalProducts,
@@ -33,6 +43,8 @@ export async function GET(request: Request) {
     lowStockCount,
     stockoutCount,
     expiring30DaysCount,
+    openInboundQuantity,
+    openInboundReceiptCount: openInboundReceipts.length,
     pendingRequisitionsCount: 7,
     fillRatePercentage: 97.4,
   });

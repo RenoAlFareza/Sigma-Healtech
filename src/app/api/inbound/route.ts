@@ -5,7 +5,8 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') || undefined;
-  const data = listReceipts({ status: status as never });
+  const destinationLocationId = searchParams.get('destinationLocationId') || undefined;
+  const data = listReceipts({ status: status as never, destinationLocationId });
   return NextResponse.json({ data, totalCount: data.length });
 }
 
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Forbidden: ${actor.role} cannot create inbound` }, { status: 403 });
   }
 
-  let body: { sourceType?: string; referenceId?: string; items?: unknown };
+  let body: { sourceType?: string; referenceId?: string; destinationLocationId?: string; items?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
   const created = createReceipt({
     sourceType: body?.sourceType || 'SUPPLIER',
     referenceId: body?.referenceId,
+    destinationLocationId: body?.destinationLocationId || actor.defaultLocationId,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     items: items as any[],
   });

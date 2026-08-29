@@ -11,6 +11,8 @@ export interface DashboardSummary {
   lowStockCount: number;
   stockoutCount: number;
   expiring30DaysCount: number;
+  openInboundQuantity: number;
+  openInboundReceiptCount: number;
   pendingRequisitionsCount: number;
   fillRatePercentage: number;
 }

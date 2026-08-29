@@ -23,6 +23,8 @@ describe('Dashboard API', () => {
       lowStockCount: 5,
       stockoutCount: 2,
       expiring30DaysCount: 8,
+      openInboundQuantity: 100,
+      openInboundReceiptCount: 1,
       pendingRequisitionsCount: 14,
       fillRatePercentage: 96.5,
     };
