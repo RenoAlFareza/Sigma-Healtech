@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, ClipboardList } from 'lucide-react';
-import { Card, DataTable, StatusBadge, Select, Button, Skeleton, ErrorState, EmptyState } from '@/shared/ui';
+import { Card, DataTable, StatusBadge, Select, Button, Skeleton, ErrorState } from '@/shared/ui';
 import type { DataTableColumn } from '@/shared/ui';
 import { formatDate } from '@/shared/lib/format';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -22,11 +22,11 @@ const STATUS_OPTIONS = [
   { value: 'RECEIVED', label: 'RECEIVED' },
 ];
 
-export function RequisitionList() {
+export function RequisitionList({ initialStatus = 'ALL' }: { initialStatus?: string }) {
   const router = useRouter();
   const { user, role } = useAuth();
 
-  const [status, setStatus] = useState('ALL');
+  const [status, setStatus] = useState(initialStatus);
   const [origin, setOrigin] = useState('ALL');
   const [data, setData] = useState<Requisition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,8 @@ export function RequisitionList() {
   }, [status, effectiveOrigin, requesterOnly, user?.id]);
 
   useEffect(() => {
-    fetchData();
+    const requestId = window.setTimeout(() => void fetchData(), 0);
+    return () => window.clearTimeout(requestId);
   }, [fetchData]);
 
   const columns: DataTableColumn<Requisition>[] = useMemo(

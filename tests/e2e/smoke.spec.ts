@@ -123,7 +123,7 @@ test('list pages (/inventory, /requisitions) load without client errors after lo
   // Strict mode violations are selectors, not app failures — assert the page
   // rendered its heading and did NOT fire the previously-fatal res.data crash.
   await page.goto('/inventory');
-  await expect(page.getByText('Inventori', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Inventory Management' })).toBeVisible({ timeout: 15_000 });
 
   await page.goto('/requisitions');
   await page.waitForLoadState('networkidle');

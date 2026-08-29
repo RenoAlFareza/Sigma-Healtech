@@ -26,6 +26,7 @@ describe('supply-chain mega-menu configuration', () => {
     expect(outboundIds).toContain('outbound-requisition-list');
     expect(inventoryIds).toContain('inventory-transfer');
     expect(inventoryIds).toContain('inventory-cycle-count');
+    expect(inventoryIds?.[0]).toBe('inventory-overview');
   });
 
   it('limits requestors to dashboard and unit requisition workflows', () => {

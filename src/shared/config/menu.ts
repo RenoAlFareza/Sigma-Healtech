@@ -58,9 +58,16 @@ const navigation: ProtectedMenuItem[] = [
         label: 'Persediaan',
         items: [
           {
+            id: 'inventory-overview',
+            label: 'Overview Inventory',
+            href: '/inventory/overview',
+            description: 'Visual kondisi stok dan aktivitas masuk per lokasi.',
+            roles: INVENTORY_ROLES,
+          },
+          {
             id: 'inventory-view',
-            label: 'Lihat Persediaan',
-            href: '/inventory',
+            label: 'Rincian Persediaan',
+            href: '/inventory?view=details',
             description: 'Stok per produk, lot, bin, dan lokasi.',
             roles: INVENTORY_ROLES,
           },

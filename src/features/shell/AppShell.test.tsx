@@ -118,6 +118,7 @@ describe('AppShell Component', () => {
     );
 
     const trigger = screen.getByRole('button', { name: /Inventory/i });
+    expect(screen.getByRole('link', { name: 'Inventory' })).toHaveAttribute('href', '/inventory/overview');
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(trigger);
     expect(trigger).toHaveAttribute('aria-expanded', 'true');

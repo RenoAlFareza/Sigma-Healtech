@@ -22,6 +22,8 @@ const STATUS_OPTIONS = [
   { value: 'STOCKOUT', label: 'Stockout' },
   { value: 'EXPIRING', label: 'Expiring' },
   { value: 'EXPIRED', label: 'Expired' },
+  { value: 'UNASSIGNED_BIN', label: 'Belum Memiliki Bin' },
+  { value: 'NEGATIVE', label: 'Persediaan Negatif' },
 ];
 
 export function InventoryBrowser({

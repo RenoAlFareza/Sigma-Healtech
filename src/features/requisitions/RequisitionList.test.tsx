@@ -69,6 +69,17 @@ describe('RequisitionList', () => {
     );
   });
 
+  it('uses the status supplied by a dashboard link', async () => {
+    mockUseAuth.mockReturnValue({
+      role: 'MANAGER',
+      user: { id: 'usr-manager', name: 'Manager', role: 'MANAGER' },
+    });
+    render(<RequisitionList initialStatus="SUBMITTED" />);
+    await flushPromises();
+
+    expect(mockList).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'SUBMITTED' }));
+  });
+
   it('REQUESTOR sees only requisitions they requested (requestedBy = user.id)', async () => {
     const myReqs = [
       req({ id: 'REQ-001', requestNumber: 'REQ-2026-RQ-1001', requestedBy: 'usr-pharmacist' }),

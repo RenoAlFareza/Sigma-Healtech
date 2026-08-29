@@ -149,12 +149,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const shortcutItems = useMemo(() => {
     const candidates = [
       { item: menu.find((entry) => entry.id === 'dashboard'), icon: LayoutDashboard, label: 'Dashboard' },
-      { item: menu.find((entry) => entry.id === 'inventory'), icon: Boxes, label: 'Inventory' },
+      { item: menu.find((entry) => entry.id === 'inventory'), icon: Boxes, label: 'Inventory', href: '/inventory/overview' },
       { item: menu.find((entry) => entry.id === 'outbound') ?? menu.find((entry) => entry.id === 'purchasing'), icon: Repeat2, label: 'Transaksi' },
       { item: menu.find((entry) => entry.id === 'reporting'), icon: TrendingUp, label: 'Fill rate' },
     ];
     return candidates.flatMap((candidate) => {
-      const href = firstMenuHref(candidate.item);
+      const href = candidate.href ?? firstMenuHref(candidate.item);
       return href ? [{ ...candidate, href }] : [];
     });
   }, [menu]);
