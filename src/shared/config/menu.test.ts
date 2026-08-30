@@ -25,6 +25,7 @@ describe('supply-chain mega-menu configuration', () => {
 
     expect(outboundIds).toContain('outbound-requisition-list');
     expect(outboundIds).toContain('transaction-overview');
+    expect(destinationsFor('ADMIN').map((item) => item.id)).toContain('fill-rate-overview');
     expect(inventoryIds).toContain('inventory-transfer');
     expect(inventoryIds).toContain('inventory-cycle-count');
     expect(inventoryIds?.[0]).toBe('inventory-overview');

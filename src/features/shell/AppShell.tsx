@@ -148,11 +148,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const shortcutItems = useMemo(() => {
     const transactionOverview = destinations.find((destination) => destination.id === 'transaction-overview');
+    const fillRateOverview = destinations.find((destination) => destination.id === 'fill-rate-overview');
     const candidates = [
       { item: menu.find((entry) => entry.id === 'dashboard'), icon: LayoutDashboard, label: 'Dashboard' },
       { item: menu.find((entry) => entry.id === 'inventory'), icon: Boxes, label: 'Inventory', href: '/inventory/overview' },
       { item: menu.find((entry) => entry.id === 'outbound') ?? menu.find((entry) => entry.id === 'purchasing'), icon: Repeat2, label: 'Transaksi', href: transactionOverview?.href },
-      { item: menu.find((entry) => entry.id === 'reporting'), icon: TrendingUp, label: 'Fill rate' },
+      { item: menu.find((entry) => entry.id === 'reporting'), icon: TrendingUp, label: 'Fill rate', href: fillRateOverview?.href },
     ];
     return candidates.flatMap((candidate) => {
       const href = candidate.href ?? firstMenuHref(candidate.item);

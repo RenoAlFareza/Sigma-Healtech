@@ -233,6 +233,14 @@ const navigation: ProtectedMenuItem[] = [
         label: 'Laporan Utama',
         items: [
           {
+            id: 'fill-rate-overview',
+            label: 'Fill Rate Intelligence',
+            href: '/fill-rate',
+            description: 'Analisis requested, approved, issued, gap, dan service level unit.',
+            roles: REPORTING_ROLES,
+            readOnlyRoles: ['VIEWER'],
+          },
+          {
             id: 'reporting-summary',
             label: 'Ringkasan Persediaan',
             href: '/reports?type=summary',
