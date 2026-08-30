@@ -16,6 +16,7 @@ function seedReceipts(): InboundReceipt[] {
       sourceType: 'SUPPLIER',
       destinationLocationId: 'wh-pusat',
       status: 'CREATED',
+      createdAt: new Date().toISOString(),
       items: [
         { productId: '93000462', qtyExpected: 100, lot: 'LOT-IN-001', expiry: '2028-01-01', bin: '' },
       ],
@@ -53,6 +54,7 @@ export function createReceipt(input: {
     referenceId: input.referenceId,
     destinationLocationId: input.destinationLocationId,
     status: 'CREATED',
+    createdAt: new Date().toISOString(),
     items: input.items.map((it) => ({ ...it })),
   };
   state.unshift(receipt);

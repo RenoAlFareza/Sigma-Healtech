@@ -147,17 +147,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ]), [destinations]);
 
   const shortcutItems = useMemo(() => {
+    const transactionOverview = destinations.find((destination) => destination.id === 'transaction-overview');
     const candidates = [
       { item: menu.find((entry) => entry.id === 'dashboard'), icon: LayoutDashboard, label: 'Dashboard' },
       { item: menu.find((entry) => entry.id === 'inventory'), icon: Boxes, label: 'Inventory', href: '/inventory/overview' },
-      { item: menu.find((entry) => entry.id === 'outbound') ?? menu.find((entry) => entry.id === 'purchasing'), icon: Repeat2, label: 'Transaksi' },
+      { item: menu.find((entry) => entry.id === 'outbound') ?? menu.find((entry) => entry.id === 'purchasing'), icon: Repeat2, label: 'Transaksi', href: transactionOverview?.href },
       { item: menu.find((entry) => entry.id === 'reporting'), icon: TrendingUp, label: 'Fill rate' },
     ];
     return candidates.flatMap((candidate) => {
       const href = candidate.href ?? firstMenuHref(candidate.item);
       return href ? [{ ...candidate, href }] : [];
     });
-  }, [menu]);
+  }, [destinations, menu]);
   const searchableItems = useMemo<MenuDestination[]>(() => menu.flatMap((item) => {
     if (item.href) {
       return [{ id: item.id, label: item.label, href: item.href, description: `Buka halaman ${item.label}` }];
@@ -246,7 +247,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="h-px w-8 bg-[#e5eae7]" />
           <nav className="flex w-full flex-col items-center gap-3">
             {shortcutItems.map(({ item, href, icon: Icon, label }) => {
-              const active = item ? currentActiveMenuId === item.id : isRouteActive(pathname, href);
+              const active = isRouteActive(pathname, href) || (item ? currentActiveMenuId === item.id : false);
               return (
                 <Link key={`${label}-${href}`} href={href} onClick={closePopovers} title={label} aria-label={label} aria-current={active ? 'page' : undefined} className={`grid h-12 w-12 place-items-center rounded-2xl transition ${active ? 'bg-[#e8f5e9] text-[#2d6a4f] shadow-sm' : 'text-[#6b7c74] hover:bg-[#f1f5f3] hover:text-[#2d6a4f]'}`}>
                   <Icon className="h-5 w-5" />

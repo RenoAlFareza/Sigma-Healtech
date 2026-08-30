@@ -24,6 +24,7 @@ describe('supply-chain mega-menu configuration', () => {
     const inventoryIds = menu.find((item) => item.id === 'inventory')?.groups?.flatMap((group) => group.items.map((item) => item.id));
 
     expect(outboundIds).toContain('outbound-requisition-list');
+    expect(outboundIds).toContain('transaction-overview');
     expect(inventoryIds).toContain('inventory-transfer');
     expect(inventoryIds).toContain('inventory-cycle-count');
     expect(inventoryIds?.[0]).toBe('inventory-overview');

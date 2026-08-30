@@ -76,3 +76,37 @@ test('inventory bento cards stack without overflow on mobile', async ({ page }) 
   expect(secondMetric?.y).toBeGreaterThan((firstMetric?.y ?? 0) + (firstMetric?.height ?? 0) - 1);
   expect(await page.locator('body').evaluate((body) => body.scrollWidth - body.clientWidth)).toBe(0);
 });
+
+test('transaction management uses the reference bento composition', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await login(page);
+  await page.goto('/transactions');
+  await expect(page.getByRole('heading', { name: 'Transaction Management' })).toBeVisible({ timeout: 15_000 });
+
+  const metrics = page.locator('section[aria-label="KPI transaksi"] article');
+  await expect(metrics).toHaveCount(4);
+  const firstMetric = await metrics.nth(0).boundingBox();
+  const secondMetric = await metrics.nth(1).boundingBox();
+  expect(firstMetric?.y).toBe(secondMetric?.y);
+
+  await expect(page.getByRole('img', { name: /grouped bar chart arus/i })).toBeVisible();
+  await expect(page.getByRole('img', { name: /donut chart distribusi jenis/i })).toBeVisible();
+  await expect(page.getByRole('img', { name: /mixed chart throughput/i })).toBeVisible();
+  const flow = await page.getByRole('img', { name: /grouped bar chart arus/i }).boundingBox();
+  const distribution = await page.getByRole('img', { name: /donut chart distribusi jenis/i }).boundingBox();
+  expect(flow?.width).toBeGreaterThan(distribution?.width ?? 0);
+  expect(await page.locator('body').evaluate((body) => body.scrollWidth - body.clientWidth)).toBe(0);
+});
+
+test('transaction management stacks without body overflow on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+  await page.goto('/transactions');
+  await expect(page.getByRole('heading', { name: 'Transaction Management' })).toBeVisible({ timeout: 15_000 });
+
+  const metrics = page.locator('section[aria-label="KPI transaksi"] article');
+  const firstMetric = await metrics.nth(0).boundingBox();
+  const secondMetric = await metrics.nth(1).boundingBox();
+  expect(secondMetric?.y).toBeGreaterThan((firstMetric?.y ?? 0) + (firstMetric?.height ?? 0) - 1);
+  expect(await page.locator('body').evaluate((body) => body.scrollWidth - body.clientWidth)).toBe(0);
+});

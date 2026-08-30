@@ -179,6 +179,14 @@ const navigation: ProtectedMenuItem[] = [
         label: 'Permintaan Unit',
         items: [
           {
+            id: 'transaction-overview',
+            label: 'Transaction Management',
+            href: '/transactions',
+            description: 'Visual arus mutasi, throughput, status dokumen, dan audit ledger.',
+            roles: INVENTORY_ROLES,
+            readOnlyRoles: ['REQUESTOR', 'VIEWER'],
+          },
+          {
             id: 'outbound-requisition-list',
             label: 'Daftar Permintaan',
             href: '/requisitions',
