@@ -24,6 +24,7 @@ import {
   Settings2,
   ShoppingCart,
   TrendingUp,
+  User,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -394,10 +395,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="hidden text-left min-[1320px]:block"><strong className="flex items-center gap-1 text-[10px] text-[#1b2a24]">{user?.name}<ChevronDown className="h-3 w-3 text-[#9ca8a2]" /></strong><small className="block text-[9px] text-[#9ca8a2]">{user?.id}</small></span>
                 </button>
                 {isProfileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-[#e5eae7] bg-white p-3 shadow-[0_12px_32px_-4px_rgba(27,42,36,0.14)]">
-                    <div className="flex items-center gap-3 rounded-xl bg-[#f8faf9] p-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-[#2d6a4f] text-[10px] font-bold text-white">{getInitials(user?.name)}</span><span className="min-w-0"><strong className="block truncate text-xs text-[#1b2a24]">{user?.name}</strong><small className="text-[9px] font-bold text-[#2d6a4f]">{role || 'VIEWER'} • {user?.id}</small></span></div>
-                    {role === 'ADMIN' && <Link href="/config/users" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-[11px] font-semibold text-[#43584c] hover:bg-[#f1f5f3]"><Settings2 className="h-4 w-4" />Pengaturan teknis</Link>}
-                    <button type="button" onClick={() => void handleLogout()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[11px] font-semibold text-[#b84d48] hover:bg-[#fff1ef]"><LogOut className="h-4 w-4" />Keluar</button>
+                  <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-2xl border border-[#e5eae7] bg-white p-3 shadow-[0_12px_32px_-4px_rgba(27,42,36,0.14)]">
+                    <div className="flex items-center gap-3 rounded-xl bg-gradient-to-br from-[#f8faf9] to-[#e8f5e9]/50 p-3 border border-[#edf1ee]">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#2d6a4f] text-[11px] font-extrabold text-white shadow-sm">
+                        {getInitials(user?.name)}
+                      </span>
+                      <span className="min-w-0">
+                        <strong className="block truncate text-xs font-bold text-[#1b2a24]">{user?.name || 'Staf SIGMA'}</strong>
+                        <span className="inline-block mt-0.5 px-2 py-0.5 rounded-md bg-[#2d6a4f]/10 text-[9px] font-bold text-[#2d6a4f] uppercase tracking-wide">
+                          {role || 'VIEWER'} &bull; {user?.id || 'US-001'}
+                        </span>
+                      </span>
+                    </div>
+
+                    <div className="mt-2 space-y-0.5 border-t border-[#edf1ee] pt-2">
+                      <Link 
+                        href="/profile" 
+                        onClick={() => setIsProfileOpen(false)} 
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[11px] font-semibold text-[#31483c] transition hover:bg-[#e8f5e9] hover:text-[#2d6a4f]"
+                      >
+                        <User className="h-4 w-4 text-[#2d6a4f]" />
+                        Lihat Profil & Keamanan
+                      </Link>
+                      {role === 'ADMIN' && (
+                        <Link 
+                          href="/config/users" 
+                          onClick={() => setIsProfileOpen(false)} 
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[11px] font-semibold text-[#31483c] transition hover:bg-[#e8f5e9] hover:text-[#2d6a4f]"
+                        >
+                          <Settings2 className="h-4 w-4 text-[#2d6a4f]" />
+                          Pengaturan Pengguna Sistem
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="mt-2 border-t border-[#edf1ee] pt-2">
+                      <button 
+                        type="button" 
+                        onClick={() => void handleLogout()} 
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[11px] font-semibold text-[#b84d48] transition hover:bg-[#fff1ef]"
+                      >
+                        <LogOut className="h-4 w-4 text-[#ef4444]" />
+                        Keluar dari Sistem
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
