@@ -10,6 +10,7 @@ export {
   type ExpiryRow,
   type StockoutRow,
   type SummaryRow,
+  type AuditRow,
   type TransactionRow,
   type ReportData,
 } from '@/shared/lib/reportAggregates';

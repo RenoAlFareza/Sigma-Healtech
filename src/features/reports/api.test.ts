@@ -32,4 +32,10 @@ describe('reports api', () => {
     await getReport('summary', { locationId: 'ALL' });
     expect(mockApiFetch).toHaveBeenCalledWith('/reports/summary');
   });
+
+  it('fetches audit report with location filter', async () => {
+    mockApiFetch.mockResolvedValue({ type: 'audit', rows: [] });
+    await getReport('audit', { locationId: 'wh-pusat' });
+    expect(mockApiFetch).toHaveBeenCalledWith('/reports/audit?locationId=wh-pusat');
+  });
 });

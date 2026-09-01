@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Expiry, stockout, summary, and transaction reports.',
 };
 
-const REPORT_TYPES: ReportType[] = ['summary', 'expiry', 'stockout', 'transactions'];
+const REPORT_TYPES: ReportType[] = ['summary', 'expiry', 'stockout', 'audit', 'transactions'];
 
 export default async function ReportsPage({ searchParams }: PageProps<'/reports'>) {
   const requestedType = (await searchParams).type;

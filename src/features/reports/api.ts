@@ -1,7 +1,16 @@
 import { apiFetch } from '@/api';
 import type { ReportData, ReportType, ReportParams } from './compute';
 
-export type { ReportType, ReportData } from './compute';
+export type {
+  ReportType,
+  ReportData,
+  ReportParams,
+  ExpiryRow,
+  StockoutRow,
+  SummaryRow,
+  AuditRow,
+  TransactionRow,
+} from './compute';
 
 export async function getReport(type: ReportType, params: ReportParams = {}): Promise<ReportData> {
   const sp = new URLSearchParams();

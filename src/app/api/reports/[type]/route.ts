@@ -3,7 +3,7 @@ import type { ReportType } from '@/shared/lib/reportAggregates';
 import { getDb } from '@/api/_fixtures/store';
 import { NextResponse } from 'next/server';
 
-const VALID_TYPES: ReportType[] = ['expiry', 'stockout', 'summary', 'transactions'];
+const VALID_TYPES: ReportType[] = ['expiry', 'stockout', 'summary', 'audit', 'transactions'];
 
 type RouteContext = { params: Promise<{ type: string }> };
 

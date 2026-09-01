@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { ToastProvider } from '@/shared/ui';
 
 const mockGetReport = vi.fn();
 const mockReplace = vi.fn();
@@ -28,7 +29,31 @@ const expiryData = {
   ],
 };
 
+const auditData = {
+  type: 'audit',
+  rows: [
+    {
+      id: 'CC-2026-001',
+      countNumber: 'SO-2026-0801',
+      locationId: 'wh-pusat',
+      locationName: 'Gudang Farmasi Pusat',
+      date: '2026-08-28T14:00:00+07:00',
+      itemCount: 45,
+      matchedCount: 44,
+      accuracy: 98,
+      netVariance: -2,
+      netVarianceValue: -48000,
+      status: 'RESOLVED',
+      reasonsSummary: 'Selisih Fisik Hitung (2)',
+    },
+  ],
+};
+
 async function flush() { await new Promise((r) => setTimeout(r, 0)); }
+
+function renderWithToast(ui: React.ReactElement) {
+  return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 describe('ReportsHub', () => {
   beforeEach(() => {
@@ -37,14 +62,14 @@ describe('ReportsHub', () => {
   });
 
   it('renders the report type selected by the URL entry point', async () => {
-    render(<ReportsHub initialType="expiry" />);
+    renderWithToast(<ReportsHub initialType="expiry" />);
     await flush();
     await waitFor(() => expect(screen.getByText('Paracetamol')).toBeInTheDocument());
     expect(mockGetReport).toHaveBeenCalledWith('expiry', expect.objectContaining({ locationId: 'wh-pusat' }));
   });
 
   it('switches tabs and fetches the matching report type', async () => {
-    render(<ReportsHub initialType="expiry" />);
+    renderWithToast(<ReportsHub initialType="expiry" />);
     await flush();
     await waitFor(() => expect(screen.getByText('Paracetamol')).toBeInTheDocument());
 
@@ -59,11 +84,19 @@ describe('ReportsHub', () => {
     globalThis.URL.createObjectURL = createObjectURL;
     globalThis.URL.revokeObjectURL = revokeObjectURL;
     HTMLAnchorElement.prototype.click = vi.fn();
-    render(<ReportsHub initialType="expiry" />);
+    renderWithToast(<ReportsHub initialType="expiry" />);
     await flush();
     await waitFor(() => expect(screen.getByText('Paracetamol')).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('button', { name: /export csv/i }));
     expect(createObjectURL).toHaveBeenCalled();
+  });
+
+  it('renders the audit cycle count report tab correctly', async () => {
+    mockGetReport.mockResolvedValue(auditData);
+    renderWithToast(<ReportsHub initialType="audit" />);
+    await flush();
+    await waitFor(() => expect(screen.getByText('SO-2026-0801')).toBeInTheDocument());
+    expect(screen.getByText('98% Akurat')).toBeInTheDocument();
   });
 });
