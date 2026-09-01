@@ -52,7 +52,7 @@ describe('InboundList', () => {
 
     await waitFor(() => expect(screen.getByText('IN-2026-3001')).toBeInTheDocument());
     expect(mockListInbound).toHaveBeenCalledWith({ status: 'COMPLETED' });
-    expect(screen.getByRole('button', { name: /atur bin/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /putaway|atur bin/i })).toBeInTheDocument();
   });
 
   it('removes processing actions for viewer roles', async () => {

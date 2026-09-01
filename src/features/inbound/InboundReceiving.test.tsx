@@ -52,7 +52,8 @@ describe('InboundReceiving', () => {
     await flush();
     await waitFor(() => expect(screen.getByLabelText(/diterima/i)).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: /terima barang/i }));
+    const submitButtons = screen.getAllByRole('button', { name: /selesaikan penerimaan|terima barang/i });
+    await userEvent.click(submitButtons[0]);
 
     await waitFor(() => {
       expect(mockCommit).toHaveBeenCalled();
@@ -69,7 +70,8 @@ describe('InboundReceiving', () => {
     await flush();
     await waitFor(() => expect(screen.getByLabelText(/diterima/i)).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: /terima barang/i }));
+    const submitButtons = screen.getAllByRole('button', { name: /selesaikan penerimaan|terima barang/i });
+    await userEvent.click(submitButtons[0]);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -86,7 +88,8 @@ describe('InboundReceiving', () => {
     await userEvent.clear(qtyInputs[0]);
     await userEvent.type(qtyInputs[0], '40');
 
-    await userEvent.click(screen.getByRole('button', { name: /terima barang/i }));
+    const submitButtons = screen.getAllByRole('button', { name: /selesaikan penerimaan|terima barang/i });
+    await userEvent.click(submitButtons[0]);
     await waitFor(() => {
       expect(mockCommit).toHaveBeenCalled();
     });

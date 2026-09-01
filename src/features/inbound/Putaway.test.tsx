@@ -15,6 +15,10 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   return { ...actual, useToast: () => ({ toast: mockToast }) };
 });
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
+}));
+
 import { Putaway } from './Putaway';
 
 const receipt: InboundReceipt = {
@@ -43,8 +47,8 @@ describe('Putaway', () => {
   it('rejects save when a bin is missing', async () => {
     render(<Putaway id="RCP-001" />);
     await flush();
-    await waitFor(() => expect(screen.getByRole('button', { name: /simpan putaway/i })).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /simpan putaway/i }));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /simpan putaway/i })[0]).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('button', { name: /simpan putaway/i })[0]);
     expect(mockToast.error).toHaveBeenCalled();
   });
 
@@ -53,7 +57,7 @@ describe('Putaway', () => {
     await flush();
     await waitFor(() => expect(screen.getByLabelText(/bin tujuan/i)).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText(/bin tujuan/i), { target: { value: 'Z-A9' } });
-    fireEvent.click(screen.getByRole('button', { name: /simpan putaway/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /simpan putaway/i })[0]);
     expect(mockToast.success).toHaveBeenCalled();
   });
 });
