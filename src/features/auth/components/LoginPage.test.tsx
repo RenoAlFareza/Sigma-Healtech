@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LoginPage } from './LoginPage';
@@ -30,7 +31,7 @@ describe('LoginPage', () => {
   it('renders login form with branding and demo credentials list', () => {
     render(<LoginPage />);
 
-    expect(screen.getByRole('heading', { level: 1, name: /Workspace operasional SIGMA/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /Rantai Pasok Farmasi|SIGMA/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Nama Pengguna/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Kata Sandi/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Masuk/i })).toBeInTheDocument();
