@@ -54,12 +54,8 @@ export function LoginPage() {
       {/* Outer Card Container */}
       <div className="w-full max-w-6xl min-h-[640px] bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 border border-neutral-200/80">
         
-        {/* LEFT PANEL: Hijau Brand SIGMA Healtech (#1eab6b / Button Green) */}
-        <div className="lg:col-span-5 bg-[#1eab6b] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden">
-          {/* Subtle Background Decorative Glow / Gradients */}
-          <div className="absolute -top-24 -left-24 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-black/10 rounded-full blur-3xl pointer-events-none" />
-
+        {/* LEFT PANEL: Hijau Brand Flat (#169d60 / Button Hover Green) */}
+        <div className="lg:col-span-5 bg-[#169d60] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between relative">
           {/* Top Branding Section (Logo Removed from Green Panel) */}
           <div className="relative z-10 space-y-4">
             <div className="space-y-1.5 pt-1">
