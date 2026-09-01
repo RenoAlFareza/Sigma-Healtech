@@ -1,11 +1,23 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trash2 } from 'lucide-react';
-import { Card, FormWizard, Input, Select, Button, DataTable, useToast } from '@/shared/ui';
+import {
+  ArrowLeft,
+  Boxes,
+  CheckCircle2,
+  Clock,
+  Download,
+  Package,
+  Plus,
+  Send,
+  Trash2,
+  Truck,
+} from 'lucide-react';
+import { Button, Card, DataTable, FormWizard, Input, Select, useToast } from '@/shared/ui';
 import type { DataTableColumn } from '@/shared/ui';
-import { formatQuantity } from '@/shared/lib/format';
+import { formatNumber, formatQuantity } from '@/shared/lib/format';
 import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { fefoPick } from './fefo';
@@ -34,7 +46,7 @@ export function OutboundNew() {
   const [submitting, setSubmitting] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
 
-  // Load the real KFA product catalog for the picker.
+  // Load KFA product catalog for the picker.
   useEffect(() => {
     let cancelled = false;
     listProducts({ size: 100, keyword: search || undefined })
@@ -110,7 +122,7 @@ export function OutboundNew() {
       // Move through ITEMS → PICKING → dispatch.
       await transitionOutboundStatus(created.id, 'PICKING');
       const disp = await transitionOutboundStatus(created.id, 'DISPATCHED');
-      toast.success(`Outbound ${disp.movementNumber} dikirim`, 'Berhasil');
+      toast.success(`Pengeluaran ${disp.movementNumber} berhasil dikirim dan stok gudang didebit.`, 'Berhasil');
       router.push('/outbound');
       router.refresh();
     } catch (err) {
@@ -123,12 +135,35 @@ export function OutboundNew() {
   const columns: DataTableColumn<WizardItem>[] = [
     { id: 'kfaCode', header: 'SKU', accessorKey: 'kfaCode', isMono: true },
     { id: 'productName', header: 'Produk', accessorKey: 'productName' },
-    { id: 'qty', header: 'Jumlah', align: 'right', cell: (it) => (
-      <Input id={`qty-${it.productId}`} type="number" min={0} value={String(it.qty)} onChange={(e) => updateQty(it.productId, Number(e.target.value))} aria-label="Jumlah" />
-    ) },
-    { id: 'actions', header: '', align: 'right', cell: (it) => (
-      <Button variant="ghost" size="sm" onClick={() => removeItem(it.productId)} leftIcon={<Trash2 className="w-3.5 h-3.5" />} aria-label="Hapus item" />
-    ) },
+    {
+      id: 'qty',
+      header: 'Jumlah',
+      align: 'right',
+      cell: (it) => (
+        <Input
+          id={`qty-${it.productId}`}
+          type="number"
+          min={0}
+          value={String(it.qty)}
+          onChange={(e) => updateQty(it.productId, Number(e.target.value))}
+          aria-label="Jumlah"
+        />
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      align: 'right',
+      cell: (it) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => removeItem(it.productId)}
+          leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+          aria-label="Hapus item"
+        />
+      ),
+    },
   ];
 
   const hasItems = items.length > 0;
@@ -141,13 +176,23 @@ export function OutboundNew() {
       isValid: true,
       content: (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div><Input id="ob-origin" label="Unit Asal" value={activeLocationId ?? ''} readOnly isMono /></div>
-          <div><Input id="ob-dest" label="Unit Tujuan" value="depo-rawat-inap" readOnly isMono /></div>
           <div>
-            <Select id="ob-type" label="Jenis" value={type} onChange={(e) => setType(e.target.value)} options={[
-              { value: 'REPLENISHMENT', label: 'Replenishment' },
-              { value: 'REQUISITION', label: 'Requisition' },
-            ]} />
+            <Input id="ob-origin" label="Unit Asal" value={activeLocationId ?? ''} readOnly isMono />
+          </div>
+          <div>
+            <Input id="ob-dest" label="Unit Tujuan" value="depo-rawat-inap" readOnly isMono />
+          </div>
+          <div>
+            <Select
+              id="ob-type"
+              label="Jenis"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              options={[
+                { value: 'REPLENISHMENT', label: 'Replenishment (Restock Rutin)' },
+                { value: 'REQUISITION', label: 'Requisition (Permintaan Unit)' },
+              ]}
+            />
           </div>
         </div>
       ),
@@ -161,9 +206,15 @@ export function OutboundNew() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row gap-3 md:items-end">
             <div className="flex-1 md:max-w-sm">
-              <Input id="ob-search" label="Cari Produk" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nama atau SKU…" />
+              <Input
+                id="ob-search"
+                label="Cari Produk"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Nama atau SKU…"
+              />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {filteredCatalog.slice(0, 3).map((p) => (
                 <Button key={p.id} type="button" variant="outline" size="sm" onClick={() => addItem(p)}>
                   <span className="font-mono">{p.kfaCode}</span>
@@ -182,9 +233,15 @@ export function OutboundNew() {
       isValid: validateStock,
       content: (
         <div className="flex flex-col gap-2">
-          <div className="text-sm">Memeriksa ketersediaan stok untuk {items.length} item.</div>
-          {stockError && <p role="alert" className="text-sm text-error">{stockError}</p>}
-          {!stockError && hasItems && <p className="text-xs text-muted">Stok mencukupi — lanjut ke picking.</p>}
+          <div className="text-sm font-semibold text-[#1b2a24]">
+            Memeriksa ketersediaan stok fisik gudang untuk {items.length} item.
+          </div>
+          {stockError && <p role="alert" className="text-sm font-semibold text-rose-600">{stockError}</p>}
+          {!stockError && hasItems && (
+            <p className="text-xs text-emerald-700 font-medium bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
+              ✓ Stok mencukupi — sistem siap mengalokasikan batch FEFO (First-Expired, First-Out).
+            </p>
+          )}
         </div>
       ),
     },
@@ -194,15 +251,21 @@ export function OutboundNew() {
       description: 'Alokasi lot kedaluwarsa tercepat',
       isValid: true,
       content: (
-        <div className="flex flex-col gap-2">
-          <div className="text-sm">Picking mengalokasikan lot dengan FEFO (first-expiry-first-out).</div>
-          {items.map((it) => (
-            <div key={it.productId} className="flex justify-between text-sm border-b border-neutral-100 py-1">
-              <span className="font-mono">{it.kfaCode}</span>
-              <span>{it.productName}</span>
-              <span className="font-mono">{formatQuantity(it.qty)}</span>
-            </div>
-          ))}
+        <div className="flex flex-col gap-3">
+          <div className="text-xs text-[#52665d]">
+            Sistem secara otomatis mengalokasikan batch/lot obat dengan tanggal kedaluwarsa terdekat (*First-Expired, First-Out*):
+          </div>
+          <div className="divide-y divide-[#edf1ee] rounded-xl border border-[#dfe6e2] bg-white">
+            {items.map((it) => (
+              <div key={it.productId} className="flex items-center justify-between p-3 text-xs">
+                <div>
+                  <span className="font-mono font-bold text-[#2d6a4f] mr-2">{it.kfaCode}</span>
+                  <span className="font-semibold text-[#1b2a24]">{it.productName}</span>
+                </div>
+                <span className="font-mono font-bold text-[#1b2a24]">{formatQuantity(it.qty)} Unit</span>
+              </div>
+            ))}
+          </div>
         </div>
       ),
     },
@@ -211,25 +274,53 @@ export function OutboundNew() {
       title: 'Pack',
       description: 'Kemas barang',
       isValid: true,
-      content: <p className="text-sm text-muted">Barang dikemas dan siap dikirim.</p>,
+      content: (
+        <div className="rounded-xl border border-[#dfe6e2] bg-[#f8faf9] p-4 text-xs space-y-2">
+          <div className="font-bold text-[#1b2a24]">Pengelompokan Kemasan Koli (Container/Box):</div>
+          <p className="text-[#52665d]">
+            Barang telah dikelompokkan ke dalam box pengiriman terstandar dan siap disegel untuk dikirim ke unit pemohon.
+          </p>
+        </div>
+      ),
     },
     {
       id: 'dispatch',
       title: 'Dispatch',
       description: 'Kirim & debit stok',
       isValid: true,
-      content: <p className="text-sm text-muted">Konfirmasi mengirim outbound. Stok gudang akan dipotong otomatis.</p>,
+      content: (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs space-y-2">
+          <div className="font-bold text-emerald-900">Konfirmasi Pengeluaran & Penerbitan Surat Jalan:</div>
+          <p className="text-emerald-800">
+            Setelah menekan tombol kirim di bawah, saldo persediaan fisik di Gudang Farmasi Pusat akan dipotong otomatis dan tercatat pada Buku Besar Kartu Stok (Electronic Stock Card).
+          </p>
+        </div>
+      ),
     },
   ];
 
   return (
-    <Card title="Buat Outbound" subtitle="6-langkah pengiriman barang keluar" padding="lg">
-      <FormWizard
-        steps={steps}
-        onComplete={handleCreate}
-        isSubmitting={submitting}
-        submitLabel="Kirim Outbound"
-      />
-    </Card>
+    <div className="space-y-4">
+      <Link
+        href="/outbound"
+        className="inline-flex items-center gap-2 rounded-xl border border-[#d8e2dc] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#2d6a4f] shadow-sm transition hover:bg-[#f1f5f3] w-fit"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Kembali ke Daftar Outbound
+      </Link>
+
+      <Card
+        title="Buat Pengeluaran FEFO (Outbound Wizard)"
+        subtitle="Alur terstruktur 6-langkah pengeluaran barang keluar gudang berbasis FEFO"
+        padding="lg"
+      >
+        <FormWizard
+          steps={steps}
+          onComplete={handleCreate}
+          isSubmitting={submitting}
+          submitLabel="Kirim Outbound"
+        />
+      </Card>
+    </div>
   );
 }

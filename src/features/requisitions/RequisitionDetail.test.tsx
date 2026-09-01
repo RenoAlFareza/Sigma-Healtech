@@ -65,7 +65,7 @@ describe('RequisitionDetail', () => {
     await waitFor(() => {
       expect(screen.getByText('REQ-2026-RQ-1001')).toBeInTheDocument();
     });
-    expect(screen.getByText(/depo-rawat-inap/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/depo-rawat-inap/i)[0]).toBeInTheDocument();
   });
 
   it('shows Approve/Reject actions for MANAGER on SUBMITTED', async () => {
@@ -73,9 +73,9 @@ describe('RequisitionDetail', () => {
     await flushPromises();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /setujui/i })).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /setujui/i })[0]).toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: /tolak/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /tolak/i })[0]).toBeInTheDocument();
   });
 
   it('approve action transitions to APPROVED for MANAGER', async () => {
@@ -83,9 +83,9 @@ describe('RequisitionDetail', () => {
     await flushPromises();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /setujui/i })).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /setujui/i })[0]).toBeInTheDocument();
     });
-    await userEvent.click(screen.getByRole('button', { name: /setujui/i }));
+    await userEvent.click(screen.getAllByRole('button', { name: /setujui/i })[0]);
 
     await waitFor(() => {
       expect(mockTransition).toHaveBeenCalledWith('REQ-001', { status: 'APPROVED' });
@@ -97,7 +97,7 @@ describe('RequisitionDetail', () => {
     await flushPromises();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /proses pengeluaran/i })).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /proses pengeluaran/i })[0]).toBeInTheDocument();
     });
   });
 

@@ -3,7 +3,7 @@ import { fefoPick } from './fefo';
 
 const lots = [
   { lot: 'L-LATE', expiry: '2028-01-01', qtyOnHand: 100, bin: 'Z-A1' },
-  { lot: 'L-EARLY', expiry: '2026-09-01', qtyOnHand: 30, bin: 'Z-B2' },
+  { lot: 'L-EARLY', expiry: '2027-09-01', qtyOnHand: 30, bin: 'Z-B2' },
   { lot: 'L-NOEXP', expiry: null, qtyOnHand: 20, bin: 'Z-C3' },
 ];
 

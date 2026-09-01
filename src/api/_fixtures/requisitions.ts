@@ -39,7 +39,6 @@ function makeRequestNumber(priority: RequisitionPriority): string {
 }
 
 function seedRequisitions(): Requisition[] {
-  const now = new Date().toISOString();
   return [
     {
       id: 'REQ-001',
@@ -53,7 +52,7 @@ function seedRequisitions(): Requisition[] {
         { productId: '93000462', qtyRequested: 20 },
         { productId: '93012826', qtyRequested: 10 },
       ],
-      createdAt: now,
+      createdAt: '2026-08-10T08:00:00Z',
     },
     {
       id: 'REQ-002',
@@ -64,7 +63,7 @@ function seedRequisitions(): Requisition[] {
       priority: 'URGENT',
       status: 'APPROVED',
       items: [{ productId: '93000462', qtyRequested: 50, qtyApproved: 50 }],
-      createdAt: now,
+      createdAt: '2026-08-15T09:00:00Z',
     },
     {
       id: 'REQ-003',
@@ -77,7 +76,7 @@ function seedRequisitions(): Requisition[] {
       items: [
         { productId: '93000462', qtyRequested: 30, qtyApproved: 30, qtyIssued: 30 },
       ],
-      createdAt: now,
+      createdAt: '2026-08-20T10:00:00Z',
     },
   ];
 }

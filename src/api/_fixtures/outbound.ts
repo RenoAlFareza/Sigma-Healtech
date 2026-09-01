@@ -40,7 +40,7 @@ function seedMovements(): StockMovement[] {
       type: 'REPLENISHMENT',
       status: 'PICKING',
       items: [{ productId: '93000462', qty: 20 }],
-      createdAt: new Date().toISOString(),
+      createdAt: '2026-08-01T08:00:00Z',
     },
   ];
 }
