@@ -14,17 +14,29 @@ describe('Dashboard API', () => {
   it('fetches dashboard summary correctly', async () => {
     const mockSummaryData = {
       totalProducts: 120,
+      activeInventoryQuantity: 458,
+      activeLotCount: 7,
+      activeBinCount: 5,
+      stockedSkuCount: 5,
+      locationId: 'wh-pusat',
+      locationName: 'Gudang Farmasi Pusat',
       lowStockCount: 5,
       stockoutCount: 2,
       expiring30DaysCount: 8,
+      openInboundQuantity: 100,
+      openInboundReceiptCount: 1,
+      inProgressShipmentCount: 1,
+      inProgressShipmentQuantity: 20,
+      inProgressRequisitionCount: 3,
+      inProgressRequisitionQuantity: 110,
       pendingRequisitionsCount: 14,
       fillRatePercentage: 96.5,
     };
 
     (apiFetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockSummaryData);
 
-    const data = await getDashboardSummary();
-    expect(apiFetch).toHaveBeenCalledWith('/dashboard/summary');
+    const data = await getDashboardSummary('wh-pusat');
+    expect(apiFetch).toHaveBeenCalledWith('/dashboard/summary?locationId=wh-pusat');
     expect(data).toEqual(mockSummaryData);
   });
 

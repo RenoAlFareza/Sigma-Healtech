@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Download, FileText } from 'lucide-react';
 import { Card, DataTable, Tabs, Button, Skeleton, ErrorState } from '@/shared/ui';
 import type { DataTableColumn, TabItem } from '@/shared/ui';
@@ -9,9 +10,11 @@ import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
 import { getReport } from './api';
 import type { ReportData, ReportType } from './api';
 
-export function ReportsHub() {
+export function ReportsHub({ initialType = 'summary' }: { initialType?: ReportType }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const { activeLocationId } = useActiveLocation();
-  const [type, setType] = useState<ReportType>('expiry');
+  const [type, setType] = useState<ReportType>(initialType);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,9 @@ export function ReportsHub() {
   }, [type, fetchData]);
 
   const handleTabChange = (tabId: string) => {
-    setType(tabId as ReportType);
+    const nextType = tabId as ReportType;
+    setType(nextType);
+    router.replace(`${pathname}?type=${nextType}`, { scroll: false });
   };
 
   const exportCsv = () => {

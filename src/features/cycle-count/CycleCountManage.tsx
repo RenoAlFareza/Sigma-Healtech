@@ -9,9 +9,12 @@ import { formatDate } from '@/shared/lib/format';
 import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
 import { createCycleCount, listCycleCounts } from './api';
 import type { CycleCount } from '@/shared/types/domain';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 export function CycleCountManage() {
   const router = useRouter();
+  const { role } = useAuth();
+  const canCreateCount = role !== null && ['MANAGER', 'ADMIN'].includes(role);
   const { activeLocationId } = useActiveLocation();
   const [data, setData] = useState<CycleCount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,11 +73,11 @@ export function CycleCountManage() {
       <Card
         title="Cycle Count"
         subtitle="Opname stok per lokasi"
-        headerAction={
+        headerAction={canCreateCount ? (
           <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />} isLoading={creating} onClick={handleCreate}>
             Mulai Count Baru
           </Button>
-        }
+        ) : undefined}
         padding="md"
       >
         <div className="flex flex-col md:flex-row gap-3 mb-2">

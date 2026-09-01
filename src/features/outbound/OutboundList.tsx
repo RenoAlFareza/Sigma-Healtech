@@ -9,6 +9,7 @@ import { formatDate, formatQuantity } from '@/shared/lib/format';
 import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
 import { listOutbound } from './api';
 import type { StockMovement } from '@/shared/types/domain';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 const STATUS_OPTIONS = [
   { value: 'ALL', label: 'Semua Status' },
@@ -22,6 +23,8 @@ const STATUS_OPTIONS = [
 
 export function OutboundList() {
   const router = useRouter();
+  const { role } = useAuth();
+  const canCreateOutbound = role !== null && ['ASSISTANT', 'MANAGER', 'ADMIN', 'PHARMACIST'].includes(role);
   const { activeLocationId } = useActiveLocation();
   const [status, setStatus] = useState('ALL');
   const [data, setData] = useState<StockMovement[]>([]);
@@ -77,11 +80,11 @@ export function OutboundList() {
       <Card
         title="Outbound"
         subtitle="Pengiriman barang keluar gudang"
-        headerAction={
+        headerAction={canCreateOutbound ? (
           <Button variant="primary" size="sm" leftIcon={<Plus className="w-4 h-4" />} onClick={() => router.push('/outbound/new')}>
             Buat Outbound
           </Button>
-        }
+        ) : undefined}
         padding="md"
       >
         <div className="flex flex-col md:flex-row gap-3 mb-2">

@@ -128,8 +128,12 @@ export interface InboundReceipt {
   receiptNumber: string;
   sourceType: string;
   referenceId?: string;
+  /** Warehouse/depot that will own the stock after receiving. */
+  destinationLocationId?: string;
   status: InboundStatus;
   items: InboundItem[];
+  /** Timestamp used by transaction analytics and audit filtering. */
+  createdAt?: string;
   receivedAt?: string;
   receivedBy?: string;
 }

@@ -9,9 +9,12 @@ import { formatDate, formatQuantity } from '@/shared/lib/format';
 import { useActiveLocation } from '@/features/shell/ActiveLocationContext';
 import { listTransfers } from './api';
 import type { StockTransfer } from '@/shared/types/domain';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 export function TransferList() {
   const router = useRouter();
+  const { role } = useAuth();
+  const canCreateTransfer = role !== null && ['ASSISTANT', 'MANAGER', 'ADMIN', 'PHARMACIST'].includes(role);
   const { activeLocationId } = useActiveLocation();
   const [data, setData] = useState<StockTransfer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,11 +61,11 @@ export function TransferList() {
       <Card
         title="Transfer Stok"
         subtitle="Perpindahan stok antar unit"
-        headerAction={
+        headerAction={canCreateTransfer ? (
           <Button variant="primary" size="sm" leftIcon={<ArrowRightLeft className="w-4 h-4" />} onClick={() => router.push('/transfers/new')}>
             Buat Transfer
           </Button>
-        }
+        ) : undefined}
         padding="md"
       >
         <DataTable data={data} columns={columns} keyExtractor={(t) => t.id} loading={false} emptyText="Tidak ada transfer" onRowClick={(t) => router.push(`/transfers/${t.id}`)} />

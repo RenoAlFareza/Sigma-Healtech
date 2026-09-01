@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { ProductDetail } from '@/features/products/components/ProductDetail';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<'/products/[id]'>): Promise<Metadata> {
   const { id } = await params;
   return {
     title: `Product ${id} — SIGMA`,
@@ -9,10 +9,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProductDetailPage({ params }: PageProps<'/products/[id]'>) {
   const { id } = await params;
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="w-full max-w-3xl">
       <ProductDetail productId={id} />
     </div>
   );

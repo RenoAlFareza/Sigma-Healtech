@@ -3,6 +3,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 
 const mockList = vi.fn();
 const mockPush = vi.fn();
+let mockRole = 'ADMIN';
+
+vi.mock('@/features/auth/AuthProvider', () => ({
+  useAuth: () => ({ role: mockRole }),
+}));
 
 vi.mock('@/features/outbound/api', () => ({
   listOutbound: (...a: unknown[]) => mockList(...a),
@@ -35,6 +40,7 @@ async function flush() { await new Promise((r) => setTimeout(r, 0)); }
 describe('OutboundList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRole = 'ADMIN';
     mockList.mockResolvedValue({ data: [movement], totalCount: 1 });
   });
 
@@ -50,5 +56,14 @@ describe('OutboundList', () => {
     render(<OutboundList />);
     await flush();
     await waitFor(() => expect(screen.getByText(/tidak ada outbound/i)).toBeInTheDocument());
+  });
+
+  it('keeps outbound data read-only for viewer roles', async () => {
+    mockRole = 'VIEWER';
+    render(<OutboundList />);
+    await flush();
+    await waitFor(() => expect(screen.getByText('OUT-2026-5001')).toBeInTheDocument());
+
+    expect(screen.queryByRole('button', { name: /buat outbound/i })).not.toBeInTheDocument();
   });
 });

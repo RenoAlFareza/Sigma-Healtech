@@ -4,6 +4,7 @@ import type { Requisition, RequisitionItem, RequisitionPriority, RequisitionStat
 export interface ListRequisitionsParams {
   status?: RequisitionStatus;
   originId?: string;
+  destinationId?: string;
   requestedBy?: string;
 }
 
@@ -33,6 +34,7 @@ export async function listRequisitions(
   const sp = new URLSearchParams();
   if (params.status) sp.set('status', params.status);
   if (params.originId) sp.set('originId', params.originId);
+  if (params.destinationId) sp.set('destinationId', params.destinationId);
   if (params.requestedBy) sp.set('requestedBy', params.requestedBy);
   const qs = sp.toString();
   return apiFetch<ListRequisitionsResponse>(qs ? `/requisitions?${qs}` : '/requisitions');

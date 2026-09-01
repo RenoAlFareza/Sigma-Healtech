@@ -4,14 +4,21 @@ import userEvent from '@testing-library/user-event';
 import type { InventoryItem } from '@/shared/types/domain';
 
 const mockList = vi.fn();
+const mockListLocations = vi.fn();
 const mockPush = vi.fn();
+const mockSetActiveLocationId = vi.fn();
 
 vi.mock('@/features/inventory/api', () => ({
   listInventory: (...args: unknown[]) => mockList(...args),
+  listInventoryLocations: (...args: unknown[]) => mockListLocations(...args),
 }));
 
 vi.mock('@/features/shell/ActiveLocationContext', () => ({
-  useActiveLocation: () => ({ activeLocationId: 'wh-pusat', setActiveLocationId: vi.fn() }),
+  useActiveLocation: () => ({ activeLocationId: 'wh-pusat', setActiveLocationId: mockSetActiveLocationId }),
+}));
+
+vi.mock('@/features/auth/AuthProvider', () => ({
+  useAuth: () => ({ locationIds: ['wh-pusat', 'depo-igd'] }),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -67,6 +74,11 @@ describe('InventoryBrowser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockList.mockResolvedValue({ data: items, totalCount: 2 });
+    mockListLocations.mockResolvedValue([
+      { id: 'wh-pusat', name: 'Gudang Farmasi Pusat', code: 'GFP', type: 'WAREHOUSE' },
+      { id: 'depo-igd', name: 'Depo IGD', code: 'DIGD', type: 'DEPOT' },
+      { id: 'apotek-rawat-jalan', name: 'Apotek Rawat Jalan', code: 'ARJ', type: 'PHARMACY' },
+    ]);
   });
 
   it('renders the filter bar and fetches inventory for the active location', async () => {
@@ -78,6 +90,19 @@ describe('InventoryBrowser', () => {
     );
     expect(screen.getByLabelText(/kategori/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/status/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/gudang \/ lokasi/i)).toBeInTheDocument();
+  });
+
+  it('changes the active warehouse using only locations allowed for the user', async () => {
+    render(<InventoryBrowser />);
+    const locationSelect = await screen.findByLabelText(/gudang \/ lokasi/i);
+
+    expect(screen.getByRole('option', { name: 'Gudang Farmasi Pusat (GFP)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Depo IGD (DIGD)' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Apotek Rawat Jalan (ARJ)' })).not.toBeInTheDocument();
+
+    await userEvent.selectOptions(locationSelect, 'depo-igd');
+    expect(mockSetActiveLocationId).toHaveBeenCalledWith('depo-igd');
   });
 
   it('renders inventory rows in the table after loading', async () => {
@@ -101,6 +126,37 @@ describe('InventoryBrowser', () => {
     expect(mockList).toHaveBeenLastCalledWith(
       expect.objectContaining({ status: 'LOW_STOCK' })
     );
+  });
+
+  it('refreshes immediately when a submitted keyword is cleared while preserving filters', async () => {
+    render(<InventoryBrowser initialStatus="LOW_STOCK" />);
+    await flushPromises();
+
+    await userEvent.selectOptions(screen.getByLabelText(/kategori/i), 'Antibiotik');
+    const searchInput = screen.getByLabelText(/cari produk/i);
+    await userEvent.type(searchInput, 'Paracetamol{enter}');
+
+    await waitFor(() => {
+      expect(mockList).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          keyword: 'Paracetamol',
+          category: 'Antibiotik',
+          status: 'LOW_STOCK',
+        })
+      );
+    });
+
+    await userEvent.clear(searchInput);
+
+    await waitFor(() => {
+      expect(mockList).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          keyword: undefined,
+          category: 'Antibiotik',
+          status: 'LOW_STOCK',
+        })
+      );
+    });
   });
 
   it('shows an empty state when there are no items', async () => {

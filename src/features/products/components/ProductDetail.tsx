@@ -6,6 +6,7 @@ import { Card, StatusBadge, Button, Skeleton, ErrorState } from '@/shared/ui';
 import { formatCurrency } from '@/shared/lib/format';
 import type { Product } from '@/shared/types/domain';
 import { getProduct } from '../api';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 interface DetailRowProps {
   label: string;
@@ -25,6 +26,7 @@ function DetailRow({ label, value, mono }: DetailRowProps) {
 }
 
 export function ProductDetail({ productId, initialProduct }: { productId: string; initialProduct?: Product }) {
+  const { role } = useAuth();
   const [product, setProduct] = useState<Product | null>(initialProduct || null);
   const [loading, setLoading] = useState(!initialProduct);
   const [error, setError] = useState<string | null>(null);
@@ -79,11 +81,13 @@ export function ProductDetail({ productId, initialProduct }: { productId: string
       headerAction={
         <div className="flex items-center gap-2">
           <StatusBadge status="ACTIVE" size="sm" />
-          <a href={`/products/${product.id}/edit`}>
-            <Button variant="outline" size="sm" leftIcon={<Pencil className="w-4 h-4" />}>
-              Edit
-            </Button>
-          </a>
+          {role === 'ADMIN' && (
+            <a href={`/products/${product.id}/edit`}>
+              <Button variant="outline" size="sm" leftIcon={<Pencil className="w-4 h-4" />}>
+                Edit
+              </Button>
+            </a>
+          )}
         </div>
       }
     >

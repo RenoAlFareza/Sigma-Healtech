@@ -1,14 +1,25 @@
 import type { Metadata } from 'next';
+import { InboundList } from '@/features/inbound/InboundList';
+import { InboundReceiving } from '@/features/inbound/InboundReceiving';
+import { ToastProvider } from '@/shared/ui';
 
 export const metadata: Metadata = {
   title: 'Inbound — SIGMA',
   description: 'Inbound receipts list.',
 };
 
-export default function InboundPage() {
+export default async function InboundPage({ searchParams }: PageProps<'/inbound'>) {
+  const { id } = await searchParams;
+
   return (
-    <div className="p-6">
-      <p className="text-sm text-muted">Daftar penerimaan barang. Pilih satu penerimaan untuk memulai receiving/putaway.</p>
+    <div className="w-full">
+      {typeof id === 'string' && id ? (
+        <ToastProvider>
+          <InboundReceiving id={id} />
+        </ToastProvider>
+      ) : (
+        <InboundList />
+      )}
     </div>
   );
 }

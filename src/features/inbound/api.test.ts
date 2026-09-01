@@ -29,6 +29,12 @@ describe('inbound api', () => {
     expect(res.data).toEqual([receipt]);
   });
 
+  it('listInbound serializes the destination warehouse filter', async () => {
+    mockApiFetch.mockResolvedValue({ data: [receipt], totalCount: 1 });
+    await listInbound({ status: 'CREATED', destinationLocationId: 'wh-pusat' });
+    expect(mockApiFetch).toHaveBeenCalledWith('/inbound?status=CREATED&destinationLocationId=wh-pusat');
+  });
+
   it('getInbound fetches a single receipt', async () => {
     mockApiFetch.mockResolvedValue(receipt);
     const res = await getInbound('RCP-001');

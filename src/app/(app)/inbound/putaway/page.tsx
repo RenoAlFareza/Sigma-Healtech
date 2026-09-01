@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Putaway } from '@/features/inbound/Putaway';
+import { InboundList } from '@/features/inbound/InboundList';
 import { ToastProvider } from '@/shared/ui';
 
 export const metadata: Metadata = {
@@ -14,10 +15,14 @@ export default async function PutawayPage({
 }) {
   const { id } = await searchParams;
   return (
-    <div className="p-6">
-      <ToastProvider>
-        <Putaway id={id || ''} />
-      </ToastProvider>
+    <div className="w-full">
+      {id ? (
+        <ToastProvider>
+          <Putaway id={id} />
+        </ToastProvider>
+      ) : (
+        <InboundList mode="putaway" />
+      )}
     </div>
   );
 }

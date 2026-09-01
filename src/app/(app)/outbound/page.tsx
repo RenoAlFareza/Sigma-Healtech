@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function OutboundPage() {
   return (
-    <div className="p-6">
+    <div className="w-full">
       <OutboundList />
     </div>
   );

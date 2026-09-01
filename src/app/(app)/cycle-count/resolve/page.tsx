@@ -14,7 +14,7 @@ export default async function CycleCountResolvePage({
 }) {
   const { id } = await searchParams;
   return (
-    <div className="p-6">
+    <div className="w-full">
       <ToastProvider>
         <CycleCountResolve id={id || ''} />
       </ToastProvider>

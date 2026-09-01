@@ -2,9 +2,21 @@ import { apiFetch } from '@/api/client';
 
 export interface DashboardSummary {
   totalProducts: number;
+  activeInventoryQuantity: number;
+  activeLotCount: number;
+  activeBinCount: number;
+  stockedSkuCount: number;
+  locationId: string | null;
+  locationName: string;
   lowStockCount: number;
   stockoutCount: number;
   expiring30DaysCount: number;
+  openInboundQuantity: number;
+  openInboundReceiptCount: number;
+  inProgressShipmentCount: number;
+  inProgressShipmentQuantity: number;
+  inProgressRequisitionCount: number;
+  inProgressRequisitionQuantity: number;
   pendingRequisitionsCount: number;
   fillRatePercentage: number;
 }
@@ -31,15 +43,64 @@ export interface FastMoverPoint {
   totalQty: number;
 }
 
+export interface WeeklyFulfillmentPoint {
+  day: string;
+  requested: number;
+  approved: number;
+  issued: number;
+  received: number;
+}
+
+export interface OperationalAgenda {
+  date: string;
+  startTime: string;
+  endTime: string;
+  title: string;
+  subtitle: string;
+  status: string;
+  href: string;
+}
+
+export interface OperationalSchedule {
+  month: string;
+  selectedDate: string;
+  markedDates: string[];
+  agenda: OperationalAgenda;
+}
+
+export interface RecentTransaction {
+  id: string;
+  reference: string;
+  label: string;
+  quantity: number;
+  status: string;
+  occurredAt: string;
+  href: string;
+}
+
+export interface RecentActivity {
+  id: string;
+  title: string;
+  occurredAt: string;
+  status: string;
+  tone: 'success' | 'warning' | 'info';
+  href: string;
+}
+
 export interface DashboardTrendData {
   monthlyFillRate: MonthlyFillRatePoint[];
   monthlyStockout: MonthlyStockoutPoint[];
   categoryBreakdown: CategoryBreakdownPoint[];
   fastMovers: FastMoverPoint[];
+  weeklyFulfillment: WeeklyFulfillmentPoint[];
+  operationalSchedule: OperationalSchedule;
+  recentTransactions: RecentTransaction[];
+  recentActivities: RecentActivity[];
 }
 
-export async function getDashboardSummary(): Promise<DashboardSummary> {
-  return apiFetch<DashboardSummary>('/dashboard/summary');
+export async function getDashboardSummary(locationId?: string | null): Promise<DashboardSummary> {
+  const query = locationId ? `?locationId=${encodeURIComponent(locationId)}` : '';
+  return apiFetch<DashboardSummary>(`/dashboard/summary${query}`);
 }
 
 export async function getDashboardTrend(): Promise<DashboardTrendData> {

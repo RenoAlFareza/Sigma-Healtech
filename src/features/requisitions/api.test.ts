@@ -101,4 +101,12 @@ describe('requisitions api', () => {
     expect(mockApiFetch).toHaveBeenCalledWith('/requisitions?requestedBy=usr-pharmacist');
     expect(res.data).toEqual([requisition]);
   });
+
+  it('listRequisitions serializes the destination warehouse filter', async () => {
+    mockApiFetch.mockResolvedValue({ data: [requisition], totalCount: 1 });
+
+    await listRequisitions({ destinationId: 'wh-pusat' });
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/requisitions?destinationId=wh-pusat');
+  });
 });

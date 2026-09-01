@@ -8,6 +8,8 @@ vi.mock('@/api', async (importOriginal) => {
 
 import {
   listInventory,
+  listInventoryLocations,
+  getInventoryOverview,
   getStockCard,
   getReorderReport,
 } from './api';
@@ -69,6 +71,43 @@ describe('inventory api', () => {
     await listInventory({ locationId: 'wh-pusat' });
 
     expect(mockApiFetch).toHaveBeenCalledWith('/inventory?locationId=wh-pusat');
+  });
+
+  it('listInventoryLocations fetches warehouse and service locations', async () => {
+    const locations = [{ id: 'wh-pusat', name: 'Gudang Farmasi Pusat', code: 'GFP', type: 'WAREHOUSE' as const }];
+    mockApiFetch.mockResolvedValue({ data: locations, totalCount: 1 });
+
+    const result = await listInventoryLocations();
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/locations');
+    expect(result).toEqual(locations);
+  });
+
+  it('getInventoryOverview fetches metrics for the active location', async () => {
+    const overview = {
+      locationId: 'wh-pusat',
+      locationName: 'Gudang Farmasi Pusat',
+      metrics: {
+        receivingProducts: 1,
+        unassignedBinProducts: 0,
+        negativeInventoryProducts: 0,
+        expiredProducts: 1,
+        openStockRequests: 3,
+        awaitingApprovalRequests: 1,
+      },
+      incomingSourceCounts: { supplier: 1, shipment: 0, transfer: 0 },
+      incomingMovements: [],
+      stockHealth: [],
+      categoryDistribution: [],
+      incomingPipeline: [],
+      requestPipeline: [],
+    };
+    mockApiFetch.mockResolvedValue(overview);
+
+    const result = await getInventoryOverview('wh-pusat');
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/inventory/overview?locationId=wh-pusat');
+    expect(result).toEqual(overview);
   });
 
   it('getStockCard fetches the stock card for a product+location', async () => {

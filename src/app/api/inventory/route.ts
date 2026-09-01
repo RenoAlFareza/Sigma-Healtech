@@ -42,7 +42,13 @@ export async function GET(request: Request) {
     items = items.filter((it) => it.product.category.toLowerCase().includes(category));
   }
 
-  if (statusFilter) {
+  if (statusFilter === 'ACTIVE') {
+    items = items.filter((it) => it.qtyOnHand > 0 && it.status !== 'EXPIRED');
+  } else if (statusFilter === 'UNASSIGNED_BIN') {
+    items = items.filter((it) => it.qtyOnHand > 0 && !it.bin.trim());
+  } else if (statusFilter === 'NEGATIVE') {
+    items = items.filter((it) => it.qtyOnHand < 0);
+  } else if (statusFilter) {
     items = items.filter((it) => it.status === statusFilter);
   }
 

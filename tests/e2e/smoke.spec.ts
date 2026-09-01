@@ -54,10 +54,9 @@ test('login as manager navigates to a rendering dashboard', async ({ page }) => 
   await page.waitForURL('**/dashboard', { timeout: 15_000 });
 
   // Dashboard heading + KPI stat cards render (proves client data fetch succeeded).
-  await expect(page.getByRole('heading', { name: 'Dashboard Pemantauan Logistik' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText('Total Produk')).toBeVisible();
-  // The KPI StatCard label is a direct match ("Fill Rate", exact cell in the grid).
-  await expect(page.getByText('Fill Rate', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Fulfillment Progress Overview' })).toBeVisible();
 
   // KPI values render (summary data loaded from the API) — KPI StatCard cell.
   await expect(page.getByText('Stok Habis', { exact: true }).first()).toBeVisible();
@@ -124,7 +123,7 @@ test('list pages (/inventory, /requisitions) load without client errors after lo
   // Strict mode violations are selectors, not app failures — assert the page
   // rendered its heading and did NOT fire the previously-fatal res.data crash.
   await page.goto('/inventory');
-  await expect(page.getByText('Inventori', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Inventory Management' })).toBeVisible({ timeout: 15_000 });
 
   await page.goto('/requisitions');
   await page.waitForLoadState('networkidle');

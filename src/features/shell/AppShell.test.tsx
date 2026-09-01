@@ -8,12 +8,14 @@ vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: vi.fn(),
 }));
 
+const navigationState = vi.hoisted(() => ({ pathname: '/dashboard', search: '' }));
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
-  usePathname: () => '/dashboard',
+  usePathname: () => navigationState.pathname,
+  useSearchParams: () => new URLSearchParams(navigationState.search),
 }));
 
 describe('AppShell Component', () => {
@@ -21,6 +23,12 @@ describe('AppShell Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    navigationState.pathname = '/dashboard';
+    navigationState.search = '';
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ lowStockCount: 5, stockoutCount: 2, pendingRequisitionsCount: 7 }),
+    }));
   });
 
   it('renders topbar with logo, user menu, and role-filtered navigation', () => {
@@ -45,14 +53,14 @@ describe('AppShell Component', () => {
     );
 
     expect(screen.getByText('SIGMA')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Buka menu pengguna/i })).toBeInTheDocument();
     expect(screen.getByText('Administrator Utama')).toBeInTheDocument();
-    expect(screen.getByText('ADMIN')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Child Content')).toBeInTheDocument();
   });
 
-  it('renders LocationSwitcher ONLY when user has multiple locations (e.g. ADMIN/MANAGER)', () => {
+  it('does not render the location switcher in the navbar', () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
       role: 'ADMIN',
@@ -62,27 +70,7 @@ describe('AppShell Component', () => {
       logout: mockLogout,
     });
 
-    const { rerender } = render(
-      <ActiveLocationProvider>
-        <AppShell>
-          <div>Content</div>
-        </AppShell>
-      </ActiveLocationProvider>
-    );
-
-    expect(screen.getByRole('combobox', { name: /Lokasi Aktif/i })).toBeInTheDocument();
-
-    // Now test single location user (e.g., REQUESTOR or ASSISTANT)
-    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
-      user: { id: 'usr-nurse', name: 'Perawat', role: 'REQUESTOR' },
-      role: 'REQUESTOR',
-      defaultLocationId: 'apotek-rawat-jalan',
-      locationIds: ['apotek-rawat-jalan'],
-      menu: [],
-      logout: mockLogout,
-    });
-
-    rerender(
+    render(
       <ActiveLocationProvider>
         <AppShell>
           <div>Content</div>
@@ -91,6 +79,86 @@ describe('AppShell Component', () => {
     );
 
     expect(screen.queryByRole('combobox', { name: /Lokasi Aktif/i })).not.toBeInTheDocument();
+  });
+
+  it('opens one accessible feature mega-menu with grouped destinations', () => {
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [
+        { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+        {
+          id: 'inventory',
+          label: 'Inventory',
+          groups: [
+            {
+              id: 'stock',
+              label: 'Persediaan',
+              items: [
+                {
+                  id: 'stock-card',
+                  label: 'Kartu Stok & Lot',
+                  href: '/inventory?view=stock-card',
+                  description: 'Riwayat stok per produk',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      logout: mockLogout,
+    });
+
+    render(
+      <ActiveLocationProvider>
+        <AppShell><div>Content</div></AppShell>
+      </ActiveLocationProvider>
+    );
+
+    const trigger = screen.getByRole('button', { name: /Inventory/i });
+    expect(screen.getByRole('link', { name: 'Inventory' })).toHaveAttribute('href', '/inventory/overview');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: /Kartu Stok & Lot/i })).toHaveAttribute('href', '/inventory?view=stock-card');
+  });
+
+  it('keeps only the most specific route active and clears the previous open menu', () => {
+    navigationState.pathname = '/inventory/reorder';
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [
+        { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+        {
+          id: 'inventory',
+          label: 'Inventory',
+          groups: [{
+            id: 'stock',
+            label: 'Persediaan',
+            items: [
+              { id: 'inventory-view', label: 'Lihat Persediaan', href: '/inventory' },
+              { id: 'inventory-reorder', label: 'Rekomendasi Reorder', href: '/inventory/reorder' },
+            ],
+          }],
+        },
+      ],
+      logout: mockLogout,
+    });
+
+    render(<ActiveLocationProvider><AppShell><div>Content</div></AppShell></ActiveLocationProvider>);
+
+    const inventoryTrigger = screen.getByRole('button', { name: /Inventory/i });
+    fireEvent.click(inventoryTrigger);
+    expect(screen.getByRole('link', { name: 'Rekomendasi Reorder' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Lihat Persediaan' })).not.toHaveAttribute('aria-current');
+
+    fireEvent.click(screen.getAllByRole('link', { name: 'Dashboard' })[0]);
+    expect(inventoryTrigger).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('triggers logout on clicking logout button', async () => {
@@ -112,7 +180,8 @@ describe('AppShell Component', () => {
       </ActiveLocationProvider>
     );
 
-    const logoutBtn = screen.getByRole('button', { name: /Keluar/i });
+    fireEvent.click(screen.getByRole('button', { name: /Buka menu pengguna/i }));
+    const logoutBtn = screen.getAllByRole('button', { name: /Keluar/i }).at(-1)!;
     fireEvent.click(logoutBtn);
 
     await waitFor(() => {
@@ -121,7 +190,7 @@ describe('AppShell Component', () => {
     });
   });
 
-  it('navigates to product search when GlobalSearch is submitted', () => {
+  it('opens global search as a header dropdown and navigates when submitted', () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
       role: 'ADMIN',
@@ -139,12 +208,54 @@ describe('AppShell Component', () => {
       </ActiveLocationProvider>
     );
 
-    const searchInput = screen.getByPlaceholderText(/Cari produk, SKU, atau menu\.\.\./i);
+    const searchInput = screen.getByPlaceholderText(/Search\.\.\. \(Press K\)/i);
+    fireEvent.focus(searchInput);
+    expect(screen.getByRole('region', { name: /Quick search results/i })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.change(searchInput, { target: { value: 'Paracetamol' } });
     
     const searchForm = screen.getByRole('search');
     fireEvent.submit(searchForm);
 
     expect(mockPush).toHaveBeenCalledWith('/products?search=Paracetamol');
+  });
+
+  it('opens operational notifications with live summary counts', async () => {
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [],
+      logout: mockLogout,
+    });
+
+    render(<ActiveLocationProvider><AppShell><div>Content</div></AppShell></ActiveLocationProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Notifikasi' }));
+    expect(await screen.findByText('2 SKU stok habis')).toBeInTheDocument();
+    expect(screen.getByText('7 permintaan menunggu')).toBeInTheDocument();
+  });
+
+  it('renders role-based sidebar quick action and mobile drawer', () => {
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
+      user: { id: 'usr-admin', name: 'Admin', role: 'ADMIN' },
+      role: 'ADMIN',
+      defaultLocationId: 'wh-pusat',
+      locationIds: ['wh-pusat'],
+      menu: [
+        { id: 'dashboard', label: 'Dashboard', href: '/dashboard' },
+        {
+          id: 'outbound',
+          label: 'Outbound',
+          groups: [{ id: 'requests', label: 'Permintaan', items: [{ id: 'outbound-requisition-create', label: 'Buat Permintaan', href: '/requisitions/create' }] }],
+        },
+      ],
+      logout: mockLogout,
+    });
+
+    render(<ActiveLocationProvider><AppShell><div>Content</div></AppShell></ActiveLocationProvider>);
+    expect(screen.getAllByRole('link', { name: 'Buat Permintaan' })[0]).toHaveAttribute('href', '/requisitions/create');
+    fireEvent.click(screen.getByRole('button', { name: 'Buka menu navigasi' }));
+    expect(screen.getByRole('complementary', { name: 'Menu mobile' })).toBeInTheDocument();
   });
 });

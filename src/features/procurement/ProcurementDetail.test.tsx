@@ -7,6 +7,10 @@ const mockReceive = vi.fn();
 const mockToast = { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() };
 const mockPush = vi.fn();
 
+vi.mock('@/features/auth/AuthProvider', () => ({
+  useAuth: () => ({ role: 'MANAGER' }),
+}));
+
 vi.mock('@/features/procurement/api', () => ({
   getPO: (...a: unknown[]) => mockGet(...a),
   recordPOReceipt: (...a: unknown[]) => mockReceive(...a),

@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   description: 'Edit a product.',
 };
 
-export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditProductPage({ params }: PageProps<'/products/[id]/edit'>) {
   const { id } = await params;
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="w-full max-w-3xl">
       <ToastProvider>
         <ProductForm mode="edit" productId={id} />
       </ToastProvider>

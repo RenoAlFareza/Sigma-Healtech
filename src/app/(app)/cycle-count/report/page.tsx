@@ -13,7 +13,7 @@ export default async function CycleCountReportPage({
 }) {
   const { id } = await searchParams;
   return (
-    <div className="p-6">
+    <div className="w-full">
       <CycleCountReport id={id || ''} />
     </div>
   );

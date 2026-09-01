@@ -8,6 +8,7 @@ import type { DataTableColumn } from '@/shared/ui';
 import { formatCurrency } from '@/shared/lib/format';
 import { getPO, recordPOReceipt } from './api';
 import type { PurchaseOrder } from '@/shared/types/domain';
+import { useAuth } from '@/features/auth/AuthProvider';
 
 interface ReceiptLine {
   productId: string;
@@ -20,6 +21,7 @@ interface ReceiptLine {
 
 export function ProcurementDetail({ id }: { id: string }) {
   const router = useRouter();
+  const { role } = useAuth();
   const { toast } = useToast();
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [lines, setLines] = useState<ReceiptLine[]>([]);
@@ -72,7 +74,7 @@ export function ProcurementDetail({ id }: { id: string }) {
     { id: 'kfaCode', header: 'SKU', accessorKey: 'kfaCode', isMono: true },
     { id: 'qty', header: 'Qty PO', align: 'right', cell: (l) => String(l.qty) },
     { id: 'qtyReceived', header: 'Diterima', align: 'right', cell: (l) => (
-      <Input id={`pr-${l.productId}`} type="number" min={0} max={l.qty} value={String(l.qtyReceived)} onChange={(e) => update(l.productId, Number(e.target.value))} aria-label="Diterima" />
+      <Input id={`pr-${l.productId}`} type="number" min={0} max={l.qty} value={String(l.qtyReceived)} onChange={(e) => update(l.productId, Number(e.target.value))} disabled={!canReceiveByRole} aria-label="Diterima" />
     ) },
     { id: 'unitPrice', header: 'Harga', align: 'right', cell: (l) => formatCurrency(l.unitPrice) },
   ];
@@ -86,7 +88,8 @@ export function ProcurementDetail({ id }: { id: string }) {
   }
   if (error || !po) return <ErrorState message={error || 'PO tidak ditemukan'} title="Detail PO" />;
 
-  const canReceive = po.status === 'PLACED' || po.status === 'PARTIALLY_RECEIVED';
+  const canReceiveByRole = role !== null && ['ASSISTANT', 'MANAGER', 'ADMIN'].includes(role);
+  const canReceive = canReceiveByRole && (po.status === 'PLACED' || po.status === 'PARTIALLY_RECEIVED');
 
   return (
     <div className="flex flex-col gap-4">
