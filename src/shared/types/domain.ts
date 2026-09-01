@@ -200,7 +200,7 @@ export interface PurchaseOrder {
   createdAt: string;
 }
 
-export type RequisitionPriority = 'RUTIN' | 'URGENT';
+export type RequisitionPriority = 'RUTIN' | 'URGENT' | 'EMERGENCY';
 
 export type RequisitionStatus =
   | 'CREATED'

@@ -46,8 +46,29 @@ const navigation: ProtectedMenuItem[] = [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    href: '/dashboard',
     roles: ALL_ROLES,
+    groups: [
+      {
+        id: 'dashboard-views',
+        label: 'Dashboard & Analitik',
+        items: [
+          {
+            id: 'dashboard-overview',
+            label: 'Dashboard Operasional',
+            href: '/dashboard',
+            description: 'Monitoring real-time ketersediaan, FEFO, dan antrean stok.',
+            roles: ALL_ROLES,
+          },
+          {
+            id: 'transaction-overview',
+            label: 'Transaction Management',
+            href: '/transactions',
+            description: 'Analisis mutasi bulanan, rasio permintaan, dan fill rate.',
+            roles: ALL_ROLES,
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'inventory',
@@ -59,9 +80,9 @@ const navigation: ProtectedMenuItem[] = [
         items: [
           {
             id: 'inventory-overview',
-            label: 'Overview Inventory',
+            label: 'Ringkasan Persediaan',
             href: '/inventory/overview',
-            description: 'Visual kondisi stok dan aktivitas masuk per lokasi.',
+            description: 'Laporan status stok, kuantitas minimum, ATP, dan total nilai aset.',
             roles: INVENTORY_ROLES,
           },
           {
@@ -99,17 +120,11 @@ const navigation: ProtectedMenuItem[] = [
             description: 'Redistribusi stok antar-lokasi.',
             roles: ['ADMIN', 'MANAGER', 'ASSISTANT', 'PHARMACIST'],
           },
-        ],
-      },
-      {
-        id: 'inventory-control',
-        label: 'Kontrol Stok',
-        items: [
           {
             id: 'inventory-cycle-count',
-            label: 'Stok Opname',
+            label: 'Stock Opname',
             href: '/cycle-count',
-            description: 'Hitung fisik, variance, dan rekonsiliasi.',
+            description: 'Penghitungan fisik, audit berkala, dan penyesuaian.',
             roles: ['ADMIN', 'MANAGER', 'ASSISTANT'],
           },
         ],
@@ -121,14 +136,14 @@ const navigation: ProtectedMenuItem[] = [
     label: 'Purchasing',
     groups: [
       {
-        id: 'purchasing-po',
-        label: 'Purchase Order',
+        id: 'purchasing-orders',
+        label: 'Pengadaan',
         items: [
           {
             id: 'purchasing-list',
-            label: 'Daftar Purchase Order',
+            label: 'Purchase Orders',
             href: '/procurement',
-            description: 'Pantau status pesanan dan receiving progress.',
+            description: 'Kelola pesanan pembelian obat ke pemasok.',
             roles: ['ADMIN', 'MANAGER', 'BUYER', 'VIEWER'],
             readOnlyRoles: ['VIEWER'],
           },
@@ -136,7 +151,7 @@ const navigation: ProtectedMenuItem[] = [
             id: 'purchasing-create',
             label: 'Buat Purchase Order',
             href: '/procurement/new',
-            description: 'Mulai replenishment stok dari supplier.',
+            description: 'Terbitkan PO baru ke distributor farmasi.',
             roles: ['ADMIN', 'MANAGER', 'BUYER'],
           },
         ],
@@ -153,15 +168,14 @@ const navigation: ProtectedMenuItem[] = [
         items: [
           {
             id: 'inbound-list',
-            label: 'Penerimaan Barang',
+            label: 'Daftar Penerimaan',
             href: '/inbound',
-            description: 'Catat qty, lot, expiry, dan discrepancy.',
-            roles: ['ADMIN', 'MANAGER', 'ASSISTANT', 'VIEWER'],
-            readOnlyRoles: ['VIEWER'],
+            description: 'Catat barang masuk dari supplier & QC.',
+            roles: ['ADMIN', 'MANAGER', 'ASSISTANT'],
           },
           {
             id: 'inbound-putaway',
-            label: 'Putaway',
+            label: 'Putaway Bin',
             href: '/inbound/putaway',
             description: 'Tempatkan barang diterima ke bin penyimpanan.',
             roles: ['ADMIN', 'MANAGER', 'ASSISTANT'],
@@ -178,14 +192,6 @@ const navigation: ProtectedMenuItem[] = [
         id: 'outbound-requisition',
         label: 'Permintaan Unit',
         items: [
-          {
-            id: 'transaction-overview',
-            label: 'Transaction Management',
-            href: '/transactions',
-            description: 'Visual arus mutasi, throughput, status dokumen, dan audit ledger.',
-            roles: INVENTORY_ROLES,
-            readOnlyRoles: ['REQUESTOR', 'VIEWER'],
-          },
           {
             id: 'outbound-requisition-list',
             label: 'Daftar Permintaan',
@@ -233,14 +239,6 @@ const navigation: ProtectedMenuItem[] = [
         label: 'Laporan Utama',
         items: [
           {
-            id: 'fill-rate-overview',
-            label: 'Fill Rate Intelligence',
-            href: '/fill-rate',
-            description: 'Analisis requested, approved, issued, gap, dan service level unit.',
-            roles: REPORTING_ROLES,
-            readOnlyRoles: ['VIEWER'],
-          },
-          {
             id: 'reporting-summary',
             label: 'Ringkasan Persediaan',
             href: '/reports?type=summary',
@@ -264,9 +262,9 @@ const navigation: ProtectedMenuItem[] = [
           {
             id: 'reporting-cycle-count',
             label: 'Laporan Stok Opname',
-            href: '/cycle-count/report',
+            href: '/reports?type=audit',
             description: 'Hasil variance, adjustment, dan rekonsiliasi.',
-            roles: ['ADMIN', 'MANAGER', 'ASSISTANT'],
+            roles: REPORTING_ROLES,
           },
         ],
       },
