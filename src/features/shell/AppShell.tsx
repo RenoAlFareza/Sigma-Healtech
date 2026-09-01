@@ -24,6 +24,8 @@ import {
   Settings2,
   ShoppingCart,
   TrendingUp,
+  User,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthProvider';
 import type { MenuDestination, MenuItem } from '@/shared/config/menu';

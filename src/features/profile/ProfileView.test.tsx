@@ -4,7 +4,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ProfileView } from './ProfileView';
 
-
 // Mock useAuth
 const mockLogout = vi.fn();
 vi.mock('@/features/auth/AuthProvider', () => ({
