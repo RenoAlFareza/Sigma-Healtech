@@ -1,11 +1,26 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Save, ArrowLeft } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  Coins,
+  Database,
+  Layers,
+  Package,
+  Pill,
+  Save,
+  ShieldAlert,
+  Snowflake,
+  Sparkles,
+  Thermometer,
+} from 'lucide-react';
 import { z } from 'zod';
-import { Card, Input, Select, Button, Skeleton } from '@/shared/ui';
-import { useToast } from '@/shared/ui';
+import { Button, Card, Input, Select, Skeleton, useToast } from '@/shared/ui';
 import type { Product } from '@/shared/types/domain';
 import { createProduct, updateProduct, getProduct, getCategories } from '../api';
 
@@ -31,6 +46,9 @@ const productSchema = z.object({
     }),
   uom: z.string().optional(),
   category: z.string().optional(),
+  storageCondition: z.string().optional(),
+  isHighAlert: z.boolean().optional(),
+  isColdChain: z.boolean().optional(),
 });
 
 type Schema = z.infer<typeof productSchema>;
@@ -46,6 +64,9 @@ interface FormState {
   price: string;
   uom: string;
   category: string;
+  storageCondition: string;
+  isHighAlert: boolean;
+  isColdChain: boolean;
 }
 
 const emptyState: FormState = {
@@ -57,12 +78,24 @@ const emptyState: FormState = {
   nie: '',
   manufacturer: '',
   price: '',
-  uom: '',
+  uom: 'Tablet',
   category: '',
+  storageCondition: 'ROOM_TEMP',
+  isHighAlert: false,
+  isColdChain: false,
 };
 
 function toState(product?: Product): FormState {
   if (!product) return emptyState;
+  const isCold =
+    product.name.toLowerCase().includes('injeksi') ||
+    product.name.toLowerCase().includes('insulin') ||
+    product.name.toLowerCase().includes('vaksin');
+  const isHigh =
+    product.name.toLowerCase().includes('injeksi') ||
+    product.name.toLowerCase().includes('morfin') ||
+    product.name.toLowerCase().includes('heparin');
+
   return {
     name: product.name ?? '',
     kfaCode: product.kfaCode ?? '',
@@ -72,8 +105,11 @@ function toState(product?: Product): FormState {
     nie: product.nie ?? '',
     manufacturer: product.manufacturer ?? '',
     price: product.price != null ? String(product.price) : '',
-    uom: product.uom ?? '',
+    uom: product.uom ?? 'Tablet',
     category: product.category ?? '',
+    storageCondition: isCold ? 'COLD_CHAIN' : 'ROOM_TEMP',
+    isHighAlert: isHigh,
+    isColdChain: isCold,
   };
 }
 
@@ -92,28 +128,33 @@ function toPayload(state: FormState): Partial<Product> {
   };
 }
 
-type ValidationResult = { success: true; data: FormState } | { success: false; errors: Partial<Record<keyof FormState, string>> };
+type ValidationResult =
+  | { success: true; data: FormState }
+  | { success: false; errors: Partial<Record<keyof FormState, string>> };
 
 function validate(state: FormState): ValidationResult {
   const parsed = productSchema.safeParse(state);
   if (parsed.success) return { success: true, data: state as FormState };
   const errors: Partial<Record<keyof FormState, string>> = {};
   for (const issue of parsed.error.issues) {
-    const key = issue.path[0] as keyof FormState;
-    if (key && !errors[key]) errors[key] = issue.message;
+    const field = issue.path[0] as keyof FormState;
+    if (field && !errors[field]) {
+      errors[field] = issue.message;
+    }
   }
   return { success: false, errors };
 }
 
-export function ProductForm({ product, productId, mode = 'create' }: ProductFormProps) {
+export function ProductForm({ product, productId, mode }: ProductFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [values, setValues] = useState<FormState>(() => toState(product));
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [loadingInitial, setLoadingInitial] = useState(Boolean(mode === 'edit' && productId && !product));
 
+  const isEdit = mode === 'edit' || Boolean(productId) || Boolean(product?.id);
+  const [form, setForm] = useState<FormState>(() => toState(product));
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(Boolean(productId && !product));
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,197 +167,334 @@ export function ProductForm({ product, productId, mode = 'create' }: ProductForm
   }, []);
 
   useEffect(() => {
-    if (mode !== 'edit' || !productId || product) return;
+    if (product) {
+      setForm(toState(product));
+      return;
+    }
+    if (!productId) return;
+
     let cancelled = false;
-    setLoadingInitial(true);
+    setLoading(true);
     getProduct(productId)
       .then((p) => {
-        if (!cancelled) setValues(toState(p));
-      })
-      .catch(() => {
         if (!cancelled) {
-          toast.error('Gagal memuat data produk', 'Gagal');
+          setForm(toState(p));
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          toast.error(err instanceof Error ? err.message : 'Gagal memuat produk', 'Error');
         }
       })
       .finally(() => {
-        if (!cancelled) setLoadingInitial(false);
+        if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, productId, product]);
+  }, [productId, product, toast]);
 
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setValues((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+  const handleChange = (field: keyof FormState, value: unknown) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = validate(values);
+    const result = validate(form);
     if (!result.success) {
       setErrors(result.errors);
+      toast.error('Periksa kembali input form yang ditandai merah', 'Validasi Gagal');
       return;
     }
 
     setSubmitting(true);
     try {
       const payload = toPayload(result.data);
-      if (mode === 'edit' && product?.id) {
-        await updateProduct(product.id, payload);
-        toast.success('Produk berhasil diperbarui', 'Berhasil');
+      const targetId = productId || product?.id || form.kfaCode;
+
+      if (isEdit && targetId) {
+        await updateProduct(targetId, payload);
+        toast.success(`Master produk ${form.name} berhasil diperbarui`, 'Perubahan Tersimpan');
+        router.push(`/products/${targetId}`);
       } else {
-        await createProduct(payload);
-        toast.success('Produk berhasil dibuat', 'Berhasil');
+        const created = await createProduct(payload as Product);
+        toast.success(`Produk baru ${form.name} berhasil didaftarkan`, 'Pendaftaran Berhasil');
+        router.push(`/products/${created.id || form.kfaCode}`);
       }
-      router.push('/products');
-      router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Gagal menyimpan produk', 'Gagal');
+      toast.error(err instanceof Error ? err.message : 'Gagal menyimpan produk', 'Kesalahan Sistem');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loadingInitial) {
+  if (loading) {
     return (
-      <Card title={mode === 'edit' ? 'Edit Product' : 'New Product'} padding="lg">
-        <div className="flex flex-col gap-4">
-          <Skeleton variant="rect" height={28} width="40%" count={1} />
-          <Skeleton variant="text" height={16} count={6} />
-        </div>
-      </Card>
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <Skeleton className="h-10 w-64 rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-2xl" />
+      </div>
     );
   }
 
   return (
-    <Card
-      title={mode === 'edit' ? 'Edit Product' : 'New Product'}
-      subtitle={mode === 'edit' ? `KFA: ${product?.kfaCode ?? ''}` : 'Register a new product'}
-      padding="lg"
-      footer={
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
-            onClick={() => router.back()}
-            disabled={submitting}
-          >
-            Back
-          </Button>
-          <Button type="submit" form="product-form" isLoading={submitting} leftIcon={<Save className="w-4 h-4" />}>
-            Simpan Produk
-          </Button>
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      {/* ── 1. Breadcrumb + Back ── */}
+      <div className="flex items-center gap-3">
+        <Link
+          href="/products"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[#dfe6e2] bg-white px-3 py-1.5 text-xs font-semibold text-[#1b2a24] shadow-sm transition hover:bg-[#f1f8f4]"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Batal & Kembali ke Katalog
+        </Link>
+        <span className="text-xs text-[#9ca8a2]">/</span>
+        <span className="text-xs font-semibold text-[#52665d]">
+          {isEdit ? `Edit Produk: ${form.name || form.kfaCode}` : 'Tambah Produk Baru'}
+        </span>
+      </div>
+
+      {/* ── 2. Header Title Banner ── */}
+      <div className="rounded-2xl border border-[#e5eae7] bg-white p-6 shadow-[0_2px_8px_rgba(27,42,36,0.04)]">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-[#d8f3dc] p-3 text-[#2d6a4f]">
+            <Pill className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-[#1b2a24]">
+              {isEdit ? 'Perbarui Master Data Obat' : 'Formulir Pendaftaran Obat Baru (KFA)'}
+            </h1>
+            <p className="text-xs text-[#52665d] mt-0.5">
+              Integrasi master katalog farmasi terstandarisasi Kamus Farmasi dan Alat Kesehatan (KFA) Kemenkes RI.
+            </p>
+          </div>
         </div>
-      }
-    >
-      <form id="product-form" onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <Input
-              id="name"
-              label="Nama Produk"
-              placeholder="Paracetamol 500 mg"
-              value={values.name}
-              onChange={(e) => set('name', e.target.value)}
-              error={errors.name}
-              required
-            />
+      </div>
+
+      {/* ── 3. Structured 3-Section Form ── */}
+      <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Section 1: Identitas & Nomenklatur */}
+        <div className="rounded-2xl border border-[#e5eae7] bg-white p-6 shadow-[0_2px_8px_rgba(27,42,36,0.04)] space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#1b2a24] border-b border-[#edf1ee] pb-3">
+            <Database className="w-4 h-4 text-[#2d6a4f]" />
+            Bagian 1: Identitas & Nomenklatur KFA
           </div>
 
-          <Input
-            id="kfaCode"
-            label="KFA Code"
-            placeholder="93000462"
-            value={values.kfaCode}
-            onChange={(e) => set('kfaCode', e.target.value)}
-            error={errors.kfaCode}
-            isMono
-            required
-          />
-          <Input
-            id="nie"
-            label="NIE"
-            placeholder="GBL2101710510A1"
-            value={values.nie}
-            onChange={(e) => set('nie', e.target.value)}
-            error={errors.nie}
-            isMono
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input
+                id="product-kfa-code"
+                label="KFA Code (Kode KFA)"
+                required
+                value={form.kfaCode}
+                onChange={(e) => handleChange('kfaCode', e.target.value)}
+                error={errors.kfaCode}
+                placeholder="Contoh: 93000462 (8-digit angka)"
+                disabled={isEdit}
+              />
+            </div>
 
-          <Input
-            id="zatAktif"
-            label="Zat Aktif"
-            placeholder="Paracetamol"
-            value={values.zatAktif}
-            onChange={(e) => set('zatAktif', e.target.value)}
-            error={errors.zatAktif}
-            required
-          />
-          <Input
-            id="kekuatan"
-            label="Kekuatan"
-            placeholder="500 mg"
-            value={values.kekuatan}
-            onChange={(e) => set('kekuatan', e.target.value)}
-            error={errors.kekuatan}
-          />
+            <div>
+              <Input
+                id="product-name"
+                label="Nama Produk Obat (Nama Resmi)"
+                required
+                value={form.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                error={errors.name}
+                placeholder="Contoh: Paracetamol 500 mg Tablet"
+              />
+            </div>
 
-          <Input
-            id="dosageForm"
-            label="Dosage Form"
-            placeholder="Tablet"
-            value={values.dosageForm}
-            onChange={(e) => set('dosageForm', e.target.value)}
-            error={errors.dosageForm}
-          />
-          <Input
-            id="manufacturer"
-            label="Produsen"
-            placeholder="AFIFARMA"
-            value={values.manufacturer}
-            onChange={(e) => set('manufacturer', e.target.value)}
-            error={errors.manufacturer}
-          />
+            <div>
+              <Input
+                id="product-zat-aktif"
+                label="Zat Aktif / Generik"
+                required
+                value={form.zatAktif}
+                onChange={(e) => handleChange('zatAktif', e.target.value)}
+                error={errors.zatAktif}
+                placeholder="Contoh: Paracetamol, Amoxicillin"
+              />
+            </div>
 
-          <Input
-            id="price"
-            label="Harga (IDR)"
-            type="number"
-            min={0}
-            inputMode="numeric"
-            placeholder="5000"
-            value={values.price}
-            onChange={(e) => set('price', e.target.value)}
-            error={errors.price}
-          />
-          <Input
-            id="uom"
-            label="Satuan (UoM)"
-            placeholder="Tablet"
-            value={values.uom}
-            onChange={(e) => set('uom', e.target.value)}
-            error={errors.uom}
-          />
+            <div>
+              <Input
+                id="product-nie"
+                label="Nomor Izin Edar (NIE BPOM)"
+                value={form.nie}
+                onChange={(e) => handleChange('nie', e.target.value)}
+                error={errors.nie}
+                placeholder="Contoh: DKL1234567890A1"
+              />
+            </div>
 
-          <div className="md:col-span-2">
-            <Select
-              id="category"
-              label="Kategori"
-              value={values.category}
-              onChange={(e) => set('category', e.target.value)}
-              error={errors.category}
-              options={[
-                { value: '', label: 'Pilih Kategori…' },
-                ...categories.map((c) => ({ value: c, label: c })),
-              ]}
-              placeholder="Pilih Kategori…"
-            />
+            <div className="md:col-span-2">
+              <Input
+                id="product-manufacturer"
+                label="Produsen / Pabrik Farmasi (Manufacturer)"
+                value={form.manufacturer}
+                onChange={(e) => handleChange('manufacturer', e.target.value)}
+                error={errors.manufacturer}
+                placeholder="Contoh: Kimia Farma, Kalbe Farma, Sanbe"
+              />
+            </div>
           </div>
+        </div>
+
+        {/* Section 2: Karakteristik Farmasi & Kemasan */}
+        <div className="rounded-2xl border border-[#e5eae7] bg-white p-6 shadow-[0_2px_8px_rgba(27,42,36,0.04)] space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#1b2a24] border-b border-[#edf1ee] pb-3">
+            <Layers className="w-4 h-4 text-[#2d6a4f]" />
+            Bagian 2: Karakteristik Farmasi & Kemasan
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Select
+                id="product-category"
+                label="Kategori Terapeutik (Category)"
+                value={form.category}
+                onChange={(e) => handleChange('category', e.target.value)}
+                error={errors.category}
+                options={[
+                  { value: '', label: 'Pilih Kategori...' },
+                  ...categories.map((c) => ({ value: c, label: c })),
+                ]}
+              />
+            </div>
+
+            <div>
+              <Input
+                id="product-dosage-form"
+                label="Bentuk Sediaan (Dosage Form)"
+                value={form.dosageForm}
+                onChange={(e) => handleChange('dosageForm', e.target.value)}
+                error={errors.dosageForm}
+                placeholder="Contoh: Tablet, Kapsul, Injeksi"
+              />
+            </div>
+
+            <div>
+              <Input
+                id="product-kekuatan"
+                label="Kekuatan Dosis (Strength)"
+                value={form.kekuatan}
+                onChange={(e) => handleChange('kekuatan', e.target.value)}
+                error={errors.kekuatan}
+                placeholder="Contoh: 500 mg, 20 mg/mL"
+              />
+            </div>
+
+            <div>
+              <Input
+                id="product-uom"
+                label="Satuan Terkecil (Base UOM)"
+                value={form.uom}
+                onChange={(e) => handleChange('uom', e.target.value)}
+                error={errors.uom}
+                placeholder="Contoh: Tablet, Botol, Vial"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Input
+                id="product-price"
+                label="Harga Acuan HET Kemenkes (Rp)"
+                value={form.price}
+                onChange={(e) => handleChange('price', e.target.value)}
+                error={errors.price}
+                placeholder="Contoh: 5000 (angka tanpa titik)"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Penanganan Khusus & Keamanan Klinis */}
+        <div className="rounded-2xl border border-[#e5eae7] bg-white p-6 shadow-[0_2px_8px_rgba(27,42,36,0.04)] space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#1b2a24] border-b border-[#edf1ee] pb-3">
+            <ShieldAlert className="w-4 h-4 text-[#2d6a4f]" />
+            Bagian 3: Penanganan Khusus & Keamanan Klinis
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl border border-[#edf1ee] bg-[#f8faf9] flex items-start gap-3">
+              <input
+                id="flag-cold-chain"
+                type="checkbox"
+                checked={form.isColdChain}
+                onChange={(e) => handleChange('isColdChain', e.target.checked)}
+                className="mt-0.5 rounded border-[#dfe6e2] text-[#2d6a4f] focus:ring-[#2d6a4f]"
+              />
+              <label htmlFor="flag-cold-chain" className="text-xs cursor-pointer">
+                <span className="font-bold text-[#1b2a24] block flex items-center gap-1">
+                  <Snowflake className="w-3.5 h-3.5 text-sky-600" />
+                  Cold Chain (2–8°C)
+                </span>
+                <span className="text-[11px] text-[#6b7c74]">Memerlukan penyimpanan kulkas farmasi khusus.</span>
+              </label>
+            </div>
+
+            <div className="p-4 rounded-xl border border-[#edf1ee] bg-[#f8faf9] flex items-start gap-3">
+              <input
+                id="flag-high-alert"
+                type="checkbox"
+                checked={form.isHighAlert}
+                onChange={(e) => handleChange('isHighAlert', e.target.checked)}
+                className="mt-0.5 rounded border-[#dfe6e2] text-[#2d6a4f] focus:ring-[#2d6a4f]"
+              />
+              <label htmlFor="flag-high-alert" className="text-xs cursor-pointer">
+                <span className="font-bold text-[#1b2a24] block flex items-center gap-1">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
+                  High Alert Medicine
+                </span>
+                <span className="text-[11px] text-[#6b7c74]">Obat dengan kewaspadaan tinggi (elektrolit pekat, sitostatika).</span>
+              </label>
+            </div>
+
+            <div className="p-4 rounded-xl border border-[#edf1ee] bg-[#f8faf9] flex items-start gap-3">
+              <input
+                id="flag-lasa"
+                type="checkbox"
+                defaultChecked={false}
+                className="mt-0.5 rounded border-[#dfe6e2] text-[#2d6a4f] focus:ring-[#2d6a4f]"
+              />
+              <label htmlFor="flag-lasa" className="text-xs cursor-pointer">
+                <span className="font-bold text-[#1b2a24] block flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                  Peringatan LASA
+                </span>
+                <span className="text-[11px] text-[#6b7c74]">Look-Alike Sound-Alike nama/kemasan mirip.</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Submit Action Footer ── */}
+        <div className="flex items-center justify-between rounded-2xl border border-[#e5eae7] bg-white p-5 shadow-[0_2px_8px_rgba(27,42,36,0.04)]">
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#dfe6e2] bg-white px-4 py-2.5 text-xs font-semibold text-[#1b2a24] shadow-sm transition hover:bg-[#f1f8f4]"
+          >
+            Batal
+          </Link>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            isLoading={submitting}
+            leftIcon={<Save className="w-4 h-4" />}
+            className="rounded-xl bg-[#2d6a4f] hover:bg-[#1b4332] text-xs font-semibold text-white px-6 shadow-sm"
+          >
+            {isEdit ? 'Simpan Perubahan Master Produk' : 'Simpan & Daftarkan Produk'}
+          </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 }
