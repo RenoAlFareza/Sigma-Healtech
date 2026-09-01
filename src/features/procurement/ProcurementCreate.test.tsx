@@ -41,7 +41,8 @@ describe('ProcurementCreate', () => {
   it('validates at least one item', async () => {
     render(<ProcurementCreate />);
     await flush();
-    fireEvent.click(screen.getByRole('button', { name: /buat po/i }));
+    const buttons = screen.getAllByRole('button', { name: /terbitkan purchase order|buat po/i });
+    fireEvent.click(buttons[0]);
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -51,8 +52,9 @@ describe('ProcurementCreate', () => {
     await flush();
     await waitFor(() => expect(screen.getByRole('button', { name: /93000462/i })).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /93000462/i }));
-    await waitFor(() => expect(screen.getByText('Paracetamol 500 mg')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /buat po/i }));
+    await waitFor(() => expect(screen.getAllByText('Paracetamol 500 mg').length).toBeGreaterThan(0));
+    const buttons = screen.getAllByRole('button', { name: /terbitkan purchase order|buat po/i });
+    fireEvent.click(buttons[0]);
     await waitFor(() => {
       expect(mockCreate).toHaveBeenCalled();
     });

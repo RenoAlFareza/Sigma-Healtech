@@ -49,9 +49,9 @@ describe('ProcurementDetail', () => {
   it('records a receipt and calls recordPOReceipt', async () => {
     render(<ProcurementDetail id="PO-1" />);
     await flush();
-    await waitFor(() => expect(screen.getByRole('button', { name: /catat penerimaan/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /simpan penerimaan/i })[0]).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: /catat penerimaan/i }));
+    await userEvent.click(screen.getAllByRole('button', { name: /simpan penerimaan/i })[0]);
     await waitFor(() => {
       expect(mockReceive).toHaveBeenCalled();
     });

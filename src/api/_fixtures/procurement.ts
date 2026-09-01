@@ -22,7 +22,83 @@ export function allowedPOTransition(from: PurchaseOrderStatus, to: PurchaseOrder
 export const ALL_PO_STATUSES = Object.keys(PO_TRANSITIONS) as PurchaseOrderStatus[];
 
 let seq = 11000;
-let state: PurchaseOrder[] = [];
+let state: PurchaseOrder[] = seedPOs();
+
+function seedPOs(): PurchaseOrder[] {
+  return [
+    {
+      id: 'PO-001',
+      poNumber: 'PO-2026-11001',
+      supplierName: 'PT Kimia Farma Trading & Distribution',
+      status: 'APPROVED',
+      items: [
+        { productId: '93000462', qty: 500, unitPrice: 450, qtyReceived: 0 },
+        { productId: '93012826', qty: 200, unitPrice: 1200, qtyReceived: 0 },
+        { productId: '93000463', qty: 300, unitPrice: 650, qtyReceived: 0 },
+      ],
+      total: 660000,
+      createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'PO-002',
+      poNumber: 'PO-2026-11002',
+      supplierName: 'PT Kalbe Farma Tbk',
+      status: 'PLACED',
+      items: [
+        { productId: '93000464', qty: 400, unitPrice: 1500, qtyReceived: 0 },
+        { productId: '93000465', qty: 150, unitPrice: 850, qtyReceived: 0 },
+      ],
+      total: 727500,
+      createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'PO-003',
+      poNumber: 'PO-2026-11003',
+      supplierName: 'PT Anugrah Argon Medica',
+      status: 'PARTIALLY_RECEIVED',
+      items: [
+        { productId: '93000466', qty: 100, unitPrice: 3500, qtyReceived: 60 },
+        { productId: '93000467', qty: 200, unitPrice: 900, qtyReceived: 100 },
+      ],
+      total: 530000,
+      createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'PO-004',
+      poNumber: 'PO-2026-11004',
+      supplierName: 'PT Afifarma Farma',
+      status: 'RECEIVED',
+      items: [
+        { productId: '93000468', qty: 250, unitPrice: 2200, qtyReceived: 250 },
+        { productId: '93000469', qty: 300, unitPrice: 750, qtyReceived: 300 },
+      ],
+      total: 775000,
+      createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'PO-005',
+      poNumber: 'PO-2026-11005',
+      supplierName: 'PT Tempo Scan Pacific',
+      status: 'PENDING',
+      items: [
+        { productId: '93000470', qty: 150, unitPrice: 4200, qtyReceived: 0 },
+      ],
+      total: 630000,
+      createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'PO-006',
+      poNumber: 'PO-2026-11006',
+      supplierName: 'PT Kimia Farma Trading & Distribution',
+      status: 'CANCELLED',
+      items: [
+        { productId: '93000462', qty: 100, unitPrice: 450, qtyReceived: 0 },
+      ],
+      total: 45000,
+      createdAt: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString(),
+    },
+  ];
+}
 
 function computeTotal(items: PurchaseOrderItem[]): number {
   return items.reduce((s, it) => s + it.qty * it.unitPrice, 0);
@@ -104,5 +180,5 @@ export function recordPOReceipt(
 
 export function resetPOs(): void {
   seq = 11000;
-  state = [];
+  state = seedPOs();
 }
