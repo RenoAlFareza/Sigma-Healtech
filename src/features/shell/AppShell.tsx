@@ -194,7 +194,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handlePointerDown);
     };
-  });
+  }, []);
 
   useEffect(() => {
     if (typeof fetch !== 'function') return;

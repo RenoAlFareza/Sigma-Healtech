@@ -17,6 +17,7 @@ import {
 import { getSession, clearSession } from '@/api';
 import { ApiError } from '@/api';
 import type { Role, User } from '@/api/_fixtures/types';
+import { getMenuForRole } from '@/shared/config/menu';
 import type { MenuItem } from '@/shared/config/menu';
 
 interface AuthContextValue {
@@ -32,13 +33,14 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const DEFAULT_MENU = getMenuForRole('ADMIN');
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<Role | null>(null);
-  const [defaultLocationId, setDefaultLocationId] = useState<string | null>(null);
-  const [locationIds, setLocationIds] = useState<string[]>([]);
-  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [role, setRole] = useState<Role | null>('ADMIN');
+  const [defaultLocationId, setDefaultLocationId] = useState<string | null>('wh-pusat');
+  const [locationIds, setLocationIds] = useState<string[]>(['wh-pusat', 'depo-rawat-inap', 'depo-igd', 'apotek-rawat-jalan']);
+  const [menu, setMenu] = useState<MenuItem[]>(DEFAULT_MENU);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
