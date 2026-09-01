@@ -54,29 +54,16 @@ export function LoginPage() {
       {/* Outer Card Container */}
       <div className="w-full max-w-6xl min-h-[640px] bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 border border-neutral-200/80">
         
-        {/* LEFT PANEL: Hijau Brand SIGMA Healtech */}
-        <div className="lg:col-span-5 bg-[#1b4332] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden">
+        {/* LEFT PANEL: Hijau Brand SIGMA Healtech (#1eab6b / Button Green) */}
+        <div className="lg:col-span-5 bg-[#1eab6b] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden">
           {/* Subtle Background Decorative Glow / Gradients */}
-          <div className="absolute -top-24 -left-24 w-72 h-72 bg-[#52b788]/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-[#2d6a4f]/40 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -left-24 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-black/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Top Branding Section */}
-          <div className="relative z-10 space-y-5">
-            {/* White Logo Badge */}
-            <div className="inline-flex items-center bg-white px-4 py-2 rounded-xl shadow-md border border-white/30">
-              <Image 
-                src="/logo_sigma_cropped.png" 
-                alt="SIGMA Healtech Logo" 
-                width={180} 
-                height={48} 
-                className="h-8 sm:h-9 w-auto object-contain"
-                priority
-              />
-            </div>
-
-            {/* Header Text */}
+          {/* Top Branding Section (Logo Removed from Green Panel) */}
+          <div className="relative z-10 space-y-4">
             <div className="space-y-1.5 pt-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#74c69d] flex items-center gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-100 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
                 Rantai Pasok & Logistik Farmasi
               </span>
@@ -89,14 +76,14 @@ export function LoginPage() {
           {/* Middle Operational Feature Cards */}
           <div className="relative z-10 space-y-3 my-6">
             {/* Feature 1 */}
-            <div className="p-3.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 transition-all hover:bg-white/15">
+            <div className="p-3.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 transition-all hover:bg-white/20">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#52b788]/25 border border-[#52b788]/40 flex items-center justify-center text-[#74c69d] shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white shrink-0 mt-0.5">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div className="space-y-0.5">
                   <h3 className="font-semibold text-xs sm:text-sm text-white">Akses internal</h3>
-                  <p className="text-[11px] text-emerald-100/80 leading-relaxed">
+                  <p className="text-[11px] text-emerald-50 leading-relaxed">
                     Masuk aman untuk tim & staf berwenang.
                   </p>
                 </div>
@@ -104,14 +91,14 @@ export function LoginPage() {
             </div>
 
             {/* Feature 2 */}
-            <div className="p-3.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 transition-all hover:bg-white/15">
+            <div className="p-3.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 transition-all hover:bg-white/20">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#52b788]/25 border border-[#52b788]/40 flex items-center justify-center text-[#74c69d] shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white shrink-0 mt-0.5">
                   <ClipboardCheck className="w-4 h-4" />
                 </div>
                 <div className="space-y-0.5">
                   <h3 className="font-semibold text-xs sm:text-sm text-white">Workflow terpantau</h3>
-                  <p className="text-[11px] text-emerald-100/80 leading-relaxed">
+                  <p className="text-[11px] text-emerald-50 leading-relaxed">
                     Pergerakan persediaan & permintaan terpantau.
                   </p>
                 </div>
@@ -119,14 +106,14 @@ export function LoginPage() {
             </div>
 
             {/* Feature 3 */}
-            <div className="p-3.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 transition-all hover:bg-white/15">
+            <div className="p-3.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 transition-all hover:bg-white/20">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#52b788]/25 border border-[#52b788]/40 flex items-center justify-center text-[#74c69d] shrink-0 mt-0.5">
+                <div className="w-9 h-9 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white shrink-0 mt-0.5">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div className="space-y-0.5">
                   <h3 className="font-semibold text-xs sm:text-sm text-white">Dokumen tersentral</h3>
-                  <p className="text-[11px] text-emerald-100/80 leading-relaxed">
+                  <p className="text-[11px] text-emerald-50 leading-relaxed">
                     Katalog produk KFA & data persediaan tersimpan rapi.
                   </p>
                 </div>
@@ -135,7 +122,7 @@ export function LoginPage() {
           </div>
 
           {/* Left Footer */}
-          <div className="relative z-10 text-[11px] text-emerald-200/70 pt-2 border-t border-white/10">
+          <div className="relative z-10 text-[11px] text-emerald-100/80 pt-2 border-t border-white/20">
             SIGMA Supply Chain Management &bull; Medical Logistics System
           </div>
         </div>
@@ -144,14 +131,27 @@ export function LoginPage() {
         <div className="lg:col-span-7 bg-white p-6 sm:p-10 lg:p-14 flex flex-col justify-between">
           <div className="w-full max-w-md mx-auto space-y-6">
             
-            {/* Header (Logo Removed) */}
-            <div className="text-center space-y-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#1eab6b] tracking-tight">
-                Masuk ke akun Anda
-              </h2>
-              <p className="text-xs sm:text-sm text-neutral-500">
-                Gunakan akun internal untuk mengakses dashboard rantai pasok.
-              </p>
+            {/* Header with Logo Restored */}
+            <div className="text-center space-y-2.5">
+              <div className="inline-flex items-center justify-center">
+                <Image 
+                  src="/logo_sigma_cropped.png" 
+                  alt="SIGMA Healtech Logo" 
+                  width={220} 
+                  height={55} 
+                  className="h-10 sm:h-11 w-auto object-contain"
+                  priority
+                />
+              </div>
+
+              <div className="pt-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1b4332] tracking-tight">
+                  Masuk ke akun Anda
+                </h2>
+                <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+                  Gunakan akun internal untuk mengakses dashboard rantai pasok.
+                </p>
+              </div>
             </div>
 
             {/* Error Message Alert */}
