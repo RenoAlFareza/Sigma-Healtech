@@ -144,27 +144,14 @@ export function LoginPage() {
         <div className="lg:col-span-7 bg-white p-6 sm:p-10 lg:p-14 flex flex-col justify-between">
           <div className="w-full max-w-md mx-auto space-y-6">
             
-            {/* Header & Center Logo */}
-            <div className="text-center space-y-2.5">
-              <div className="inline-flex items-center justify-center">
-                <Image 
-                  src="/logo_sigma_cropped.png" 
-                  alt="SIGMA Healtech Logo" 
-                  width={220} 
-                  height={55} 
-                  className="h-10 sm:h-11 w-auto object-contain"
-                  priority
-                />
-              </div>
-
-              <div className="pt-1">
-                <h2 className="text-xl sm:text-2xl font-bold text-[#1b4332] tracking-tight">
-                  Masuk ke akun Anda
-                </h2>
-                <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-                  Gunakan akun internal untuk mengakses dashboard rantai pasok.
-                </p>
-              </div>
+            {/* Header (Logo Removed) */}
+            <div className="text-center space-y-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1eab6b] tracking-tight">
+                Masuk ke akun Anda
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-500">
+                Gunakan akun internal untuk mengakses dashboard rantai pasok.
+              </p>
             </div>
 
             {/* Error Message Alert */}
@@ -193,7 +180,7 @@ export function LoginPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
                   required
-                  className="w-full h-11 px-3.5 bg-neutral-50/70 border border-neutral-300 rounded-xl text-sm text-neutral-800 placeholder-neutral-400 focus:bg-white focus:outline-none focus:border-[#2d6a4f] focus:ring-2 focus:ring-[#2d6a4f]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full h-11 px-3.5 bg-neutral-50/70 border border-neutral-300 rounded-xl text-sm text-neutral-800 placeholder-neutral-400 focus:bg-white focus:outline-none focus:border-[#1eab6b] focus:ring-2 focus:ring-[#1eab6b]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -206,7 +193,7 @@ export function LoginPage() {
                   <a 
                     href="#forgot" 
                     onClick={(e) => { e.preventDefault(); alert('Hubungi administrator sistem untuk mereset kata sandi Anda.'); }}
-                    className="text-xs font-medium text-[#2d6a4f] hover:text-[#1b4332] hover:underline"
+                    className="text-xs font-medium text-[#1eab6b] hover:text-[#169d60] hover:underline"
                   >
                     Lupa password?
                   </a>
@@ -221,7 +208,7 @@ export function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
                     required
-                    className="w-full h-11 pl-3.5 pr-10 bg-neutral-50/70 border border-neutral-300 rounded-xl text-sm text-neutral-800 placeholder-neutral-400 focus:bg-white focus:outline-none focus:border-[#2d6a4f] focus:ring-2 focus:ring-[#2d6a4f]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full h-11 pl-3.5 pr-10 bg-neutral-50/70 border border-neutral-300 rounded-xl text-sm text-neutral-800 placeholder-neutral-400 focus:bg-white focus:outline-none focus:border-[#1eab6b] focus:ring-2 focus:ring-[#1eab6b]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
@@ -246,7 +233,7 @@ export function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-neutral-300 text-[#2d6a4f] focus:ring-[#2d6a4f] accent-[#2d6a4f] cursor-pointer"
+                  className="w-4 h-4 rounded border-neutral-300 text-[#1eab6b] focus:ring-[#1eab6b] accent-[#1eab6b] cursor-pointer"
                 />
                 <label htmlFor="remember-me" className="text-xs text-neutral-600 select-none cursor-pointer">
                   Ingat saya
@@ -293,9 +280,9 @@ export function LoginPage() {
                     key={demo.username}
                     type="button"
                     onClick={() => handleDemoClick(demo.username)}
-                    className="p-2 text-left rounded-xl border border-neutral-200 hover:border-[#2d6a4f] hover:bg-emerald-50/60 transition-all focus-visible:outline-none group"
+                    className="p-2 text-left rounded-xl border border-neutral-200 hover:border-[#1eab6b] hover:bg-emerald-50/60 transition-all focus-visible:outline-none group"
                   >
-                    <div className="font-bold text-xs text-[#1b4332] group-hover:text-[#2d6a4f]">
+                    <div className="font-bold text-xs text-[#169d60] group-hover:text-[#1eab6b]">
                       {demo.username}
                     </div>
                     <div className="text-[10px] text-neutral-400">
@@ -312,7 +299,7 @@ export function LoginPage() {
               <a 
                 href="#register" 
                 onClick={(e) => { e.preventDefault(); alert('Pendaftaran akun internal dilakukan oleh Administrator.'); }}
-                className="font-semibold text-[#2d6a4f] hover:underline"
+                className="font-semibold text-[#1eab6b] hover:text-[#169d60] hover:underline"
               >
                 Daftar
               </a>
