@@ -58,14 +58,13 @@ function seedStock(): InventoryItem[] {
   const { products } = getDb();
   const byId = new Map(products.map((p) => [p.id, p]));
 
-  const locationByRow: Record<string, string> = {};
-  // Assign a location per row deterministically (see seedRows above grouped by comment).
+  // 1. Initial curated seed rows (preserves existing unit test expectations)
   const rowLocations: string[] = [
     'wh-pusat', 'wh-pusat', 'wh-pusat', 'wh-pusat', 'wh-pusat', 'wh-pusat',
     'wh-pusat', 'wh-pusat', 'depo-rawat-inap', 'depo-rawat-inap', 'depo-igd', 'apotek-rawat-jalan',
   ];
 
-  return seedRows.map((row, index) => {
+  const seeded: InventoryItem[] = seedRows.map((row, index) => {
     const product = byId.get(row.product.id) ?? {
       id: row.product.id,
       kfaCode: row.product.kfaCode,
@@ -75,8 +74,8 @@ function seedStock(): InventoryItem[] {
       dosageForm: '',
       nie: '',
       manufacturer: '',
-      price: 0,
-      uom: '',
+      price: 5000,
+      uom: 'Tablet',
       category: row.product.category,
     };
     const locationId = rowLocations[index];
@@ -88,9 +87,39 @@ function seedStock(): InventoryItem[] {
       expiry: isoDaysFromToday(row.expiryDays),
       qtyOnHand: row.qtyOnHand,
       bin: row.bin,
-      status: 'IN_STOCK', // derived at read time via getStockStatus
+      status: 'IN_STOCK',
     };
   });
+
+  const seededProductIds = new Set(seedRows.filter((_, idx) => rowLocations[idx] === 'wh-pusat').map((r) => r.product.id));
+
+  // 2. Expand up to 100 products for wh-pusat from master KFA product catalog
+  const sampleKfa = products.slice(0, 100);
+  sampleKfa.forEach((p, idx) => {
+    if (seededProductIds.has(p.id)) return;
+
+    let qty = 350 + ((idx * 43) % 950);
+    if (idx % 10 === 0) qty = 0; // Out of stock
+    else if (idx % 10 === 1) qty = 25 + (idx % 20); // Below minimum
+    else if (idx % 10 === 2 || idx % 10 === 3) qty = 85 + (idx % 50); // Reorder
+
+    const binRack = `RAK-${String.fromCharCode(65 + (idx % 6))}-${(idx % 15) + 1}`;
+    const lotNum = `LOT-2026-${String(idx + 100).padStart(3, '0')}`;
+    const expiryDays = 60 + ((idx * 31) % 700);
+
+    seeded.push({
+      id: `${p.id}-${lotNum}-wh-pusat`,
+      product: p,
+      locationId: 'wh-pusat',
+      lot: lotNum,
+      expiry: isoDaysFromToday(expiryDays),
+      qtyOnHand: qty,
+      bin: binRack,
+      status: 'IN_STOCK',
+    });
+  });
+
+  return seeded;
 }
 
 // Initialized after seedStock/seedRows are defined (avoids TDZ).

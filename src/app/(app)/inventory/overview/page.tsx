@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { InventoryOverview } from '@/features/inventory/InventoryOverview';
+import { InventorySummary } from '@/features/inventory/InventorySummary';
 
 export const metadata: Metadata = {
-  title: 'Overview Inventory — SIGMA',
-  description: 'Visual kondisi persediaan dan pergerakan stok masuk per lokasi.',
+  title: 'Ringkasan Persediaan (Inventory Summary) — SIGMA',
+  description: 'Laporan ringkasan persediaan medis, status stok, kuantitas ATP, dan valuasi aset per lokasi.',
 };
 
 export default function InventoryOverviewPage() {
-  return <InventoryOverview />;
+  return <InventorySummary />;
 }

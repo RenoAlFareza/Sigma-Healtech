@@ -6,7 +6,71 @@ export type CycleCountResult =
   | { ok: false; error: string };
 
 let seq = 9000;
-let state: CycleCount[] = [];
+let state: CycleCount[] = seedCycleCounts();
+
+function seedCycleCounts(): CycleCount[] {
+  return [
+    {
+      id: 'CC-001',
+      countNumber: 'CC-2026-9001',
+      locationId: 'wh-pusat',
+      status: 'IN_PROGRESS',
+      items: [
+        { productId: '93000462', lot: 'LOT-2026-001', bin: 'Z-A1', systemQty: 120 },
+        { productId: '93000463', lot: 'LOT-2026-002', bin: 'Z-A2', systemQty: 85 },
+        { productId: '93000464', lot: 'LOT-2026-003', bin: 'Z-A3', systemQty: 40 },
+        { productId: '93012826', lot: 'LOT-2026-004', bin: 'Z-B1', systemQty: 60 },
+      ],
+      createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'CC-002',
+      countNumber: 'CC-2026-9002',
+      locationId: 'wh-pusat',
+      status: 'RESOLVING',
+      items: [
+        { productId: '93000465', lot: 'LOT-2026-005', bin: 'Z-B2', systemQty: 50, countedQty: 48, variance: -2 },
+        { productId: '93000466', lot: 'LOT-2026-006', bin: 'Z-B3', systemQty: 100, countedQty: 100, variance: 0 },
+        { productId: '93000467', lot: 'LOT-2026-007', bin: 'Z-C1', systemQty: 75, countedQty: 78, variance: 3 },
+      ],
+      createdAt: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'CC-003',
+      countNumber: 'CC-2026-9003',
+      locationId: 'wh-pusat',
+      status: 'COMPLETED',
+      items: [
+        { productId: '93000468', lot: 'LOT-2026-008', bin: 'Z-C2', systemQty: 90, countedQty: 90, variance: 0 },
+        { productId: '93000469', lot: 'LOT-2026-009', bin: 'Z-C3', systemQty: 45, countedQty: 43, variance: -2, reasonCode: 'DAMAGED' },
+        { productId: '93000470', lot: 'LOT-2026-010', bin: 'Z-D1', systemQty: 30, countedQty: 30, variance: 0 },
+      ],
+      createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'CC-004',
+      countNumber: 'CC-2026-9004',
+      locationId: 'depo-igd',
+      status: 'COMPLETED',
+      items: [
+        { productId: '93000462', lot: 'LOT-2026-001', bin: 'IGD-R1', systemQty: 35, countedQty: 35, variance: 0 },
+        { productId: '93000466', lot: 'LOT-2026-006', bin: 'IGD-R2', systemQty: 20, countedQty: 19, variance: -1, reasonCode: 'EXPIRATION' },
+      ],
+      createdAt: new Date(Date.now() - 4 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'CC-005',
+      countNumber: 'CC-2026-9005',
+      locationId: 'depo-rawat-inap',
+      status: 'COMPLETED',
+      items: [
+        { productId: '93000463', lot: 'LOT-2026-002', bin: 'RWI-A1', systemQty: 50, countedQty: 50, variance: 0 },
+        { productId: '93012826', lot: 'LOT-2026-004', bin: 'RWI-A2', systemQty: 40, countedQty: 40, variance: 0 },
+      ],
+      createdAt: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+    },
+  ];
+}
 
 function makeCountNumber(): string {
   seq += 1;

@@ -1,9 +1,5 @@
-import type { Metadata } from 'next';
-import { FillRateIntelligence } from '@/features/fill-rate/FillRateIntelligence';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Fill Rate Intelligence — SIGMA',
-  description: 'Analisis requested, approved, issued, gap, dan service level requisition.',
-};
-
-export default function FillRatePage() { return <FillRateIntelligence />; }
+export default function FillRatePage() {
+  redirect('/transactions');
+}

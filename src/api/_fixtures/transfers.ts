@@ -31,8 +31,79 @@ function seedTransfers(): StockTransfer[] {
       originId: 'wh-pusat',
       destinationId: 'depo-rawat-inap',
       status: 'APPROVED',
-      items: [{ productId: '93000462', lot: 'LOT-2026-001', qty: 10 }],
-      createdAt: new Date().toISOString(),
+      items: [
+        { productId: '93000462', lot: 'LOT-2026-001', qty: 10 },
+      ],
+      createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'TRF-002',
+      transferNumber: 'TRF-2026-7002',
+      originId: 'wh-pusat',
+      destinationId: 'depo-igd',
+      status: 'COMPLETED',
+      items: [
+        { productId: '93000466', lot: 'LOT-2026-015', qty: 50 },
+        { productId: '93000467', lot: 'LOT-2026-018', qty: 30 },
+      ],
+      createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'TRF-003',
+      transferNumber: 'TRF-2026-7003',
+      originId: 'wh-pusat',
+      destinationId: 'apotek-rawat-jalan',
+      status: 'DRAFT',
+      items: [
+        { productId: '93000464', lot: 'LOT-2026-010', qty: 20 },
+        { productId: '93000465', lot: 'LOT-2026-012', qty: 10 },
+      ],
+      createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'TRF-004',
+      transferNumber: 'TRF-2026-7004',
+      originId: 'wh-pusat',
+      destinationId: 'depo-rawat-inap',
+      status: 'COMPLETED',
+      items: [
+        { productId: '93000468', lot: 'LOT-2026-022', qty: 40 },
+        { productId: '93000469', lot: 'LOT-2026-025', qty: 20 },
+      ],
+      createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'TRF-005',
+      transferNumber: 'TRF-2026-7005',
+      originId: 'wh-pusat',
+      destinationId: 'depo-igd',
+      status: 'APPROVED',
+      items: [
+        { productId: '93000470', lot: 'LOT-2026-028', qty: 15 },
+      ],
+      createdAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'TRF-006',
+      transferNumber: 'TRF-2026-7006',
+      originId: 'depo-igd',
+      destinationId: 'wh-pusat',
+      status: 'COMPLETED',
+      items: [
+        { productId: '93000462', lot: 'LOT-2026-001', qty: 5 },
+      ],
+      createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'TRF-007',
+      transferNumber: 'TRF-2026-7007',
+      originId: 'depo-rawat-inap',
+      destinationId: 'depo-igd',
+      status: 'COMPLETED',
+      items: [
+        { productId: '93000466', lot: 'LOT-2026-015', qty: 12 },
+      ],
+      createdAt: new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString(),
     },
   ];
 }
